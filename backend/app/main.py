@@ -61,9 +61,7 @@ app.include_router(voice_router, prefix="/api/tts", tags=["Voice & TTS"])
 app.include_router(auth_router, prefix="/api/auth", tags=["Auth & Identity"])
 app.include_router(rag_router, prefix="/api/memory", tags=["SCAAR Memory & RAG"])
 
-# Import and include Export Router
-from app.endpoints.export import router as export_router
-app.include_router(export_router, prefix="/export", tags=["Exports"])
+
 
 
 
@@ -91,6 +89,18 @@ async def chat_endpoint(request: ChatRequest):
     """
     try:
         from router_engine import route_query
+        from scaar_engine import ReconciliationEngine, DocumentOceanEngine, RAGSearchRequest
+        
+        user_id = getattr(request, "user_id", "user_sricharan_default")
+        fact_header = ReconciliationEngine.format_memory_header(user_id)
+        
+        doc_chunks = DocumentOceanEngine.search_vectors(RAGSearchRequest(user_id=user_id, query=request.prompt, top_k=2))
+        doc_context = "\n".join([f"- [DOC: {c.title}] {c.chunk_text}" for c in doc_chunks]) if doc_chunks else ""
+        
+        memory_context = f"{fact_header}\n{doc_context}".strip()
+        
+        if memory_context and memory_context != "No historical facts recorded yet.":
+            request.prompt = f"Active Memory Context:\n{memory_context}\n\nUser Question: {request.prompt}"
         
         target_model = None
         target_provider = None
