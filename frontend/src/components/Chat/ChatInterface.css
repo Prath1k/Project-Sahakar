@@ -1,0 +1,21 @@
+.chat-interface {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+}
+
+.chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.chat-input-wrapper {
+  padding: 16px;
+  background-image: linear-gradient(to top, var(--bg-main) 70%, transparent);
+}

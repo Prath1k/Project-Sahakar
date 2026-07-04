@@ -2,6 +2,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import os
+from typing import Optional
 from dotenv import load_dotenv
 
 # Load environment variables
@@ -23,6 +24,8 @@ class ChatRequest(BaseModel):
     prompt: str
     has_image: bool = False
     is_complex_artifact: bool = False
+    image_base64: Optional[str] = None
+    override_model: Optional[str] = None
 
 class AgentChatRequest(BaseModel):
     agent_id: str = "scholar_core"
@@ -42,13 +45,15 @@ def read_root():
     return {"message": "Welcome to ATLAS API"}
 
 # Import Agent Routers
-from agents.career_architect import router as career_architect_router
-from agents.fiscal_sentinel import router as fiscal_sentinel_router
-from agents.biometrics_pilot import router as biometrics_pilot_router
+from app.agents.career_architect import router as career_architect_router
+from app.agents.fiscal_sentinel import router as fiscal_sentinel_router
+from app.agents.biometrics_pilot import router as biometrics_pilot_router
+from app.voice_service import router as voice_router
 
 app.include_router(career_architect_router, prefix="/api/career", tags=["CareerArchitect"])
 app.include_router(fiscal_sentinel_router, prefix="/api/fiscal", tags=["FiscalSentinel"])
 app.include_router(biometrics_pilot_router, prefix="/api/biometrics", tags=["BiometricsPilot"])
+app.include_router(voice_router, prefix="/api/tts", tags=["Voice & TTS"])
 
 
 
@@ -75,8 +80,25 @@ async def chat_endpoint(request: ChatRequest):
     Handle chat queries using the Intelligent Brain Auto-Router.
     """
     try:
-        from router_engine import route_query
-        result = await route_query(request)
+        from app.router_engine import route_query
+        
+        target_model = None
+        target_provider = None
+        mo = getattr(request, 'override_model', None)
+        if mo == "Groq":
+            target_model = "llama-3.3-70b-versatile"
+            target_provider = "Groq"
+        elif mo == "SambaNova":
+            target_model = "Meta-Llama-3.1-405B-Instruct"
+            target_provider = "SambaNova"
+        elif mo == "Nvidia":
+            target_model = "meta/llama-3.2-90b-vision-instruct"
+            target_provider = "NVIDIA NIM"
+        elif mo == "Cerebras":
+            target_model = "llama3.1-8b"
+            target_provider = "Cerebras"
+            
+        result = await route_query(request, target_model=target_model, target_provider=target_provider)
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -87,8 +109,8 @@ async def agent_chat_endpoint(request: AgentChatRequest):
     Handle agent chat queries with "First Interaction" Logic using the Agent Factory.
     """
     try:
-        from router_engine import route_query
-        from agents.factory import build_full_prompt
+        from app.router_engine import route_query
+        from app.agents.factory import build_full_prompt
         
         # 1. RAG Layer: Mock querying Supabase for facts
         memory_context = "User is currently studying Networking 101. Exam is in 2 weeks."
