@@ -141,8 +141,20 @@ const ChatInterface = ({ onOpenArtifact }) => {
           />
         ))}
         {isGenerating && (
-          <div className="border-border bg-background h-[400px] w-full overflow-hidden rounded-lg border mt-4 mb-4">
-            <GlyphMatrix />
+          <div className="message-row ai-row animate-bounce-in mt-2 mb-2">
+            <div className="message-container">
+              <div className="message-avatar">
+                <img src="/logo.png" alt="AI" className="ai-avatar-img" />
+              </div>
+              <div className="message-content" style={{ display: 'flex', alignItems: 'center' }}>
+                <div className="border-border h-[60px] w-[200px] overflow-hidden rounded-2xl border relative flex items-center justify-center opacity-80 shadow-lg" style={{ backgroundColor: 'var(--bubble-ai)' }}>
+                  <GlyphMatrix color="rgba(150, 150, 150, 0.4)" />
+                  <div className="absolute z-10 text-sm font-semibold flex items-center gap-2" style={{ color: 'var(--text-main)', textShadow: '0 1px 2px rgba(0,0,0,0.8)' }}>
+                    <div className="skeleton-pulse"></div> Generating...
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         )}
         <div ref={messagesEndRef} />

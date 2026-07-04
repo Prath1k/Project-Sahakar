@@ -42,7 +42,7 @@
 
 .model-dropdown {
   position: absolute;
-  top: 100%;
+  bottom: 100%;
   left: 0;
   background-color: var(--bg-surface);
   border: 1px solid var(--border-color);
@@ -51,7 +51,7 @@
   z-index: 20;
   min-width: 200px;
   padding: 6px;
-  margin-top: 4px;
+  margin-bottom: 8px;
 }
 
 .dropdown-item {
