@@ -4,6 +4,7 @@ import time
 import random
 from typing import Dict, Any
 from dotenv import load_dotenv
+import openai
 
 # Ensure environment variables are loaded
 load_dotenv(dotenv_path="../.env")
@@ -122,18 +123,40 @@ async def route_query(request: Any, target_model: str = None, target_provider: s
     if key_value:
         masked_key = key_value[:6] + "..." + key_value[-4:] if len(key_value) > 10 else "..."
         
-    simulated_response = (
-        f"Processed query with {model_id} ({provider}).\n"
-        f"Selected Slot: {key_name} (Masked Value: {masked_key})"
-    )
-        
-    # Simulate API Latency based on provider
+    # Define actual API mappings
+    base_url = None
+    actual_model = None
+    
     if provider == "Groq":
-        time.sleep(0.2)
+        base_url = "https://api.groq.com/openai/v1"
+        actual_model = "llama-3.3-70b-versatile"
     elif provider == "SambaNova":
-        time.sleep(1.5)
+        base_url = "https://api.sambanova.ai/v1"
+        if model_id == "sambanova-deepseek-r1":
+            actual_model = "DeepSeek-R1-Distill-Llama-70B"
+        else:
+            actual_model = "Meta-Llama-3.1-70B-Instruct"
+            
+    # If base_url is set and key is found, call real LLM
+    if base_url and key_value:
+        try:
+            client = openai.AsyncClient(api_key=key_value, base_url=base_url)
+            completion = await client.chat.completions.create(
+                model=actual_model,
+                messages=[{"role": "user", "content": request.prompt}],
+                max_tokens=2000
+            )
+            final_response = completion.choices[0].message.content
+        except Exception as e:
+            final_response = f"LLM Error: {str(e)}"
     else:
-        time.sleep(1.0)
+        # Fallback to simulated response
+        final_response = (
+            f"Processed query with {model_id} ({provider}).\n"
+            f"Selected Slot: {key_name} (Masked Value: {masked_key})\n"
+            f"(Note: Real API call not configured for {provider} or key missing)"
+        )
+        time.sleep(0.5)
         
     latency_ms = (time.time() - start_time) * 1000
     
@@ -141,7 +164,7 @@ async def route_query(request: Any, target_model: str = None, target_provider: s
         "model_used": model_id,
         "provider": f"{provider} (Key Slot: {key_name})",
         "latency_ms": round(latency_ms, 2),
-        "response": simulated_response,
+        "response": final_response,
         "is_safe": True
     }
 
