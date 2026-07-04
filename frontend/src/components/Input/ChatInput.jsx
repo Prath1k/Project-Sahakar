@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
-import { Send, Mic, Paperclip, ChevronDown } from 'lucide-react';
+import { Send, Mic, Paperclip, ChevronDown, X } from 'lucide-react';
 import './ChatInput.css';
 
 const ChatInput = ({ onSendMessage, disabled, isListening, onMicClick }) => {
   const [text, setText] = useState('');
   const [model, setModel] = useState('Auto');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [attachedImage, setAttachedImage] = useState(null);
+  const fileInputRef = React.useRef(null);
 
   const models = [
     { id: 'Auto', name: '🌟 Auto (Intelligent Routing)' },
@@ -17,9 +19,22 @@ const ChatInput = ({ onSendMessage, disabled, isListening, onMicClick }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (text.trim() && !disabled) {
-      onSendMessage(text, model);
+    if ((text.trim() || attachedImage) && !disabled) {
+      onSendMessage(text, model, attachedImage?.base64);
       setText('');
+      setAttachedImage(null);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setAttachedImage({ file, base64: reader.result });
+      };
+      reader.readAsDataURL(file);
     }
   };
 
@@ -64,6 +79,19 @@ const ChatInput = ({ onSendMessage, disabled, isListening, onMicClick }) => {
           )}
         </div>
 
+        {/* Attachment Preview */}
+        {attachedImage && (
+          <div className="attachment-preview">
+            <img src={attachedImage.base64} alt="Attached preview" />
+            <button className="clear-attachment-btn" onClick={() => {
+              setAttachedImage(null);
+              if (fileInputRef.current) fileInputRef.current.value = '';
+            }}>
+              <X size={14} />
+            </button>
+          </div>
+        )}
+
         <textarea
           className="chat-textarea"
           placeholder="Ask me anything..."
@@ -75,7 +103,18 @@ const ChatInput = ({ onSendMessage, disabled, isListening, onMicClick }) => {
         />
         
         <div className="input-actions">
-          <button type="button" className="btn-silver btn-icon action-btn">
+          <input 
+            type="file" 
+            ref={fileInputRef} 
+            onChange={handleFileChange} 
+            style={{ display: 'none' }} 
+            accept="image/*"
+          />
+          <button 
+            type="button" 
+            className="btn-silver btn-icon action-btn"
+            onClick={() => fileInputRef.current?.click()}
+          >
             <Paperclip size={18} />
           </button>
           
@@ -91,7 +130,7 @@ const ChatInput = ({ onSendMessage, disabled, isListening, onMicClick }) => {
             type="button" 
             className="btn-silver btn-icon submit-btn"
             onClick={handleSubmit}
-            disabled={!text.trim() || disabled}
+            disabled={(!text.trim() && !attachedImage) || disabled}
           >
             <Send size={18} />
           </button>

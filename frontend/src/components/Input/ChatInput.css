@@ -84,6 +84,40 @@
   color: var(--text-muted);
 }
 
+.attachment-preview {
+  position: relative;
+  display: inline-block;
+  margin: 4px 8px;
+  width: max-content;
+}
+
+.attachment-preview img {
+  height: 60px;
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
+  object-fit: cover;
+}
+
+.clear-attachment-btn {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: 50%;
+  padding: 2px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-main);
+}
+
+.clear-attachment-btn:hover {
+  background: var(--bg-main);
+  color: var(--destructive);
+}
+
 .input-actions {
   display: flex;
   justify-content: flex-end;

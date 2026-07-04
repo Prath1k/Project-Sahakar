@@ -54,9 +54,50 @@ body.dark-mode .ai-avatar-img {
 }
 
 .message-footer {
-  margin-top: 12px;
   font-size: 0.75rem;
   color: var(--text-muted);
+}
+
+.message-actions-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 12px;
+}
+
+.action-icons {
+  display: flex;
+  gap: 8px;
+}
+
+.icon-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.icon-btn:hover {
+  background-color: var(--border-color);
+  color: var(--text-main);
+}
+
+.message-image-preview {
+  margin-bottom: 12px;
+}
+
+.message-image-preview img {
+  max-width: 300px;
+  max-height: 300px;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  object-fit: cover;
 }
 
 .artifact-trigger {

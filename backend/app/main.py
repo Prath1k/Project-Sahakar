@@ -2,6 +2,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import os
+from typing import Optional
 from dotenv import load_dotenv
 
 # Load environment variables
@@ -23,6 +24,8 @@ class ChatRequest(BaseModel):
     prompt: str
     has_image: bool = False
     is_complex_artifact: bool = False
+    image_base64: Optional[str] = None
+    override_model: Optional[str] = None
 
 class AgentChatRequest(BaseModel):
     agent_id: str = "scholar_core"
@@ -78,7 +81,24 @@ async def chat_endpoint(request: ChatRequest):
     """
     try:
         from app.router_engine import route_query
-        result = await route_query(request)
+        
+        target_model = None
+        target_provider = None
+        mo = getattr(request, 'override_model', None)
+        if mo == "Groq":
+            target_model = "llama-3.3-70b-versatile"
+            target_provider = "Groq"
+        elif mo == "SambaNova":
+            target_model = "Meta-Llama-3.1-405B-Instruct"
+            target_provider = "SambaNova"
+        elif mo == "Nvidia":
+            target_model = "meta/llama-3.2-90b-vision-instruct"
+            target_provider = "NVIDIA NIM"
+        elif mo == "Cerebras":
+            target_model = "llama3.1-8b"
+            target_provider = "Cerebras"
+            
+        result = await route_query(request, target_model=target_model, target_provider=target_provider)
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

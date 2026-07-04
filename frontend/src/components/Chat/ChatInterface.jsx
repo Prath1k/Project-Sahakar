@@ -39,10 +39,33 @@ const ChatInterface = ({ onOpenArtifact }) => {
     scrollToBottom();
   }, [messages, isGenerating]);
 
-  const handleSendMessage = async (text, model) => {
-    if (!text.trim()) return;
+  const handleRetry = async (messageId) => {
+    const index = messages.findIndex(m => m.id === messageId);
+    if (index > 0) {
+      const prevMsg = messages[index - 1];
+      if (prevMsg.sender === 'user') {
+        const availableModels = ['Groq', 'SambaNova', 'Cerebras'];
+        const randomModel = availableModels[Math.floor(Math.random() * availableModels.length)];
+        
+        // Remove the current AI message and the preceding User message from the UI
+        setMessages(prev => prev.slice(0, index - 1));
+        
+        // Resend the message with the randomly selected alternative model
+        handleSendMessage(prevMsg.text, randomModel, prevMsg.imageBase64);
+      }
+    }
+  };
 
-    const newUserMsg = { id: Date.now(), text, sender: 'user' };
+  const handleSendMessage = async (text, model, imageBase64 = null) => {
+    if (!text.trim() && !imageBase64) return;
+
+    const newUserMsg = { 
+      id: Date.now(), 
+      text: text || "Attached an image.", 
+      sender: 'user',
+      hasImage: !!imageBase64,
+      imageBase64
+    };
     setMessages(prev => [...prev, newUserMsg]);
     setIsGenerating(true);
 
@@ -51,7 +74,12 @@ const ChatInterface = ({ onOpenArtifact }) => {
       const res = await fetch('/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt: text })
+        body: JSON.stringify({ 
+          prompt: text || "Please describe this image.",
+          has_image: !!imageBase64,
+          image_base64: imageBase64,
+          override_model: model !== 'Auto' ? model : null
+        })
       });
       
       const data = await res.json();
@@ -105,7 +133,12 @@ const ChatInterface = ({ onOpenArtifact }) => {
     <div className="chat-interface">
       <div className="chat-messages">
         {messages.map((msg) => (
-          <MessageBubble key={msg.id} message={msg} onOpenArtifact={() => msg.hasArtifact && onOpenArtifact({ title: 'Generated Plan', content: '# Sample Plan' })} />
+          <MessageBubble 
+            key={msg.id} 
+            message={msg} 
+            onOpenArtifact={() => msg.hasArtifact && onOpenArtifact({ title: 'Generated Plan', content: '# Sample Plan' })}
+            onRetry={handleRetry}
+          />
         ))}
         {isGenerating && (
           <div className="border-border bg-background h-[400px] w-full overflow-hidden rounded-lg border mt-4 mb-4">

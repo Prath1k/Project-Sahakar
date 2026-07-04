@@ -11,7 +11,9 @@ PROVIDER_URLS = {
     "NVIDIA NIM": "https://integrate.api.nvidia.com/v1/chat/completions"
 }
 
-async def generate_response(prompt: str, model_id: str, provider: str, api_key: str) -> str:
+from typing import Optional
+
+async def generate_response(prompt: str, model_id: str, provider: str, api_key: str, image_base64: Optional[str] = None) -> str:
     """
     Sends the prompt to the selected LLM provider using their OpenAI-compatible endpoint.
     """
@@ -27,9 +29,16 @@ async def generate_response(prompt: str, model_id: str, provider: str, api_key: 
         "Content-Type": "application/json"
     }
     
+    content_payload = prompt
+    if image_base64:
+        content_payload = [
+            {"type": "text", "text": prompt},
+            {"type": "image_url", "image_url": {"url": image_base64}}
+        ]
+    
     payload = {
         "model": model_id,
-        "messages": [{"role": "user", "content": prompt}],
+        "messages": [{"role": "user", "content": content_payload}],
         "temperature": 0.7,
         "max_tokens": 1024
     }

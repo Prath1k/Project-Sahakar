@@ -129,10 +129,14 @@ async def route_query(request: Any, target_model: str = None, target_provider: s
             prompt=request.prompt,
             model_id=model_id,
             provider=provider,
-            api_key=key_value
+            api_key=key_value,
+            image_base64=getattr(request, 'image_base64', None)
         )
     except Exception as e:
         actual_response = f"Failed to call LLM API: {str(e)}"
+        
+    if actual_response.startswith("Error from") or actual_response.startswith("Exception") or actual_response.startswith("Failed to call"):
+        actual_response = "I encountered a connection error with the model. Retry again please!"
         
     latency_ms = (time.time() - start_time) * 1000
     
