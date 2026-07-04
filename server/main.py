@@ -41,6 +41,17 @@ class ChatResponse(BaseModel):
 def read_root():
     return {"message": "Welcome to ATLAS API"}
 
+# Import Agent Routers
+from agents.career_architect import router as career_architect_router
+from agents.fiscal_sentinel import router as fiscal_sentinel_router
+from agents.biometrics_pilot import router as biometrics_pilot_router
+
+app.include_router(career_architect_router, prefix="/api/career", tags=["CareerArchitect"])
+app.include_router(fiscal_sentinel_router, prefix="/api/fiscal", tags=["FiscalSentinel"])
+app.include_router(biometrics_pilot_router, prefix="/api/biometrics", tags=["BiometricsPilot"])
+
+
+
 @app.get("/models")
 def get_models():
     """Return available models in the roster"""
