@@ -65,7 +65,7 @@ async def semantic_firewall_check(prompt: str) -> bool:
             
     return True
 
-async def route_query(request: Any) -> Dict[str, Any]:
+async def route_query(request: Any, target_model: str = None, target_provider: str = None) -> Dict[str, Any]:
     """
     Main auto-routing logic:
     2. Intent & Capability Analysis with Random Key Selection
@@ -89,29 +89,30 @@ async def route_query(request: Any) -> Dict[str, Any]:
     prompt_length = len(request.prompt)
     is_code_request = bool(re.search(r'(code|script|function|python|javascript|react|rust)', request.prompt.lower()))
     
-    model_id = ""
-    provider = ""
+    model_id = target_model
+    provider = target_provider
     
-    if request.has_image:
-        model_id = "nvidia-nim-vision"
-        provider = "NVIDIA NIM"
-        
-    elif prompt_length > LONG_CONTEXT_THRESHOLD:
-        model_id = "sambanova-llama-4-maverick"
-        provider = "SambaNova"
-        
-    elif is_code_request:
-        model_id = "sambanova-deepseek-r1"
-        provider = "SambaNova"
-        
-    elif request.is_complex_artifact:
-        model_id = "gemini-1-5-pro"
-        provider = "Google AI Studio"
-        
-    else:
-        # Default Chat
-        model_id = "groq-llama-3-3"
-        provider = "Groq"
+    if not model_id or not provider:
+        if request.has_image:
+            model_id = "nvidia-nim-vision"
+            provider = "NVIDIA NIM"
+            
+        elif prompt_length > LONG_CONTEXT_THRESHOLD:
+            model_id = "sambanova-llama-4-maverick"
+            provider = "SambaNova"
+            
+        elif is_code_request:
+            model_id = "sambanova-deepseek-r1"
+            provider = "SambaNova"
+            
+        elif request.is_complex_artifact:
+            model_id = "gemini-1-5-pro"
+            provider = "Google AI Studio"
+            
+        else:
+            # Default Chat
+            model_id = "groq-llama-3-3"
+            provider = "Groq"
         
     # Fetch a random API key for the selected provider
     key_name, key_value = get_random_api_key(provider)

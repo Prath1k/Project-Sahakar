@@ -23,6 +23,12 @@ class ChatRequest(BaseModel):
     prompt: str
     has_image: bool = False
     is_complex_artifact: bool = False
+
+class AgentChatRequest(BaseModel):
+    agent_id: str = "scholar_core"
+    prompt: str
+    has_image: bool = False
+    is_complex_artifact: bool = False
     
 class ChatResponse(BaseModel):
     model_used: str
@@ -60,6 +66,52 @@ async def chat_endpoint(request: ChatRequest):
     try:
         from router_engine import route_query
         result = await route_query(request)
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/agent/chat", response_model=ChatResponse)
+async def agent_chat_endpoint(request: AgentChatRequest):
+    """
+    Handle agent chat queries with "First Interaction" Logic using the Agent Factory.
+    """
+    try:
+        from router_engine import route_query
+        from agents.factory import build_full_prompt
+        
+        # 1. RAG Layer: Mock querying Supabase for facts
+        memory_context = "User is currently studying Networking 101. Exam is in 2 weeks."
+        
+        # 2. Prompt Builder: Grab agent prompt and inject facts and user input
+        full_prompt = build_full_prompt(request.agent_id, memory_context, request.prompt)
+        
+        # Create a ChatRequest for the router with the newly built full prompt
+        router_request = ChatRequest(
+            prompt=full_prompt,
+            has_image=request.has_image,
+            is_complex_artifact=request.is_complex_artifact
+        )
+        
+        # 3. Router: Send to SambaNova (Llama-4-Maverick) as requested
+        result = await route_query(
+            router_request, 
+            target_model="sambanova-llama-4-maverick", 
+            target_provider="SambaNova"
+        )
+        
+        # 4. Output: The router engine returns the simulated response.
+        # Since we are mocking the LLM here, we'll wrap the output in the <atlas_artifact> block manually.
+        simulated_llm_output = (
+            f"<atlas_artifact type=\"markdown\">\n"
+            f"# {request.agent_id.replace('_', ' ').title()} Response\n\n"
+            f"Here is a step-by-step breakdown based on your context: {memory_context}\n\n"
+            f"**Your Request:** {request.prompt}\n\n"
+            f"Shall I proceed to step two?\n"
+            f"</atlas_artifact>\n\n"
+            f"*(Debug: {result['response']})*"
+        )
+        result["response"] = simulated_llm_output
+        
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
