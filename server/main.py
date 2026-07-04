@@ -23,12 +23,14 @@ class ChatRequest(BaseModel):
     prompt: str
     has_image: bool = False
     is_complex_artifact: bool = False
+    user_id: str = "user_sricharan_default"
 
 class AgentChatRequest(BaseModel):
     agent_id: str = "scholar_core"
     prompt: str
     has_image: bool = False
     is_complex_artifact: bool = False
+    user_id: str = "user_sricharan_default"
     
 class ChatResponse(BaseModel):
     model_used: str
@@ -46,11 +48,15 @@ from agents.career_architect import router as career_architect_router
 from agents.fiscal_sentinel import router as fiscal_sentinel_router
 from agents.biometrics_pilot import router as biometrics_pilot_router
 from voice_service import router as voice_router
+from auth_service import router as auth_router
+from rag_router import router as rag_router
 
 app.include_router(career_architect_router, prefix="/api/career", tags=["CareerArchitect"])
 app.include_router(fiscal_sentinel_router, prefix="/api/fiscal", tags=["FiscalSentinel"])
 app.include_router(biometrics_pilot_router, prefix="/api/biometrics", tags=["BiometricsPilot"])
 app.include_router(voice_router, prefix="/api/tts", tags=["Voice & TTS"])
+app.include_router(auth_router, prefix="/api/auth", tags=["Auth & Identity"])
+app.include_router(rag_router, prefix="/api/memory", tags=["SCAAR Memory & RAG"])
 
 
 
@@ -91,9 +97,19 @@ async def agent_chat_endpoint(request: AgentChatRequest):
     try:
         from router_engine import route_query
         from agents.factory import build_full_prompt
+        from scaar_engine import ReconciliationEngine, DocumentOceanEngine, RAGSearchRequest, DeterministicGateway, DeterministicValidationRequest
         
-        # 1. RAG Layer: Mock querying Supabase for facts
-        memory_context = "User is currently studying Networking 101. Exam is in 2 weeks."
+        # 1. SCAAR RAG Layer: Dynamically retrieve reconciled atomic facts from The Fact Brain
+        user_id = getattr(request, "user_id", "user_sricharan_default")
+        fact_header = ReconciliationEngine.format_memory_header(user_id)
+        
+        # Also perform cosine similarity search across vectorized textbooks & study guides in The Document Ocean
+        doc_chunks = DocumentOceanEngine.search_vectors(RAGSearchRequest(user_id=user_id, query=request.prompt, top_k=2))
+        doc_context = "\n".join([f"- [DOC: {c.title}] {c.chunk_text}" for c in doc_chunks]) if doc_chunks else ""
+        
+        memory_context = f"{fact_header}\n{doc_context}".strip()
+        if not memory_context:
+            memory_context = "No historical facts or document chunks found."
         
         # 2. Prompt Builder: Grab agent prompt and inject facts and user input
         full_prompt = build_full_prompt(request.agent_id, memory_context, request.prompt)
@@ -102,7 +118,8 @@ async def agent_chat_endpoint(request: AgentChatRequest):
         router_request = ChatRequest(
             prompt=full_prompt,
             has_image=request.has_image,
-            is_complex_artifact=request.is_complex_artifact
+            is_complex_artifact=request.is_complex_artifact,
+            user_id=user_id
         )
         
         # 3. Router: Send to SambaNova (Llama-4-Maverick) as requested
@@ -112,18 +129,22 @@ async def agent_chat_endpoint(request: AgentChatRequest):
             target_provider="SambaNova"
         )
         
-        # 4. Output: The router engine returns the simulated response.
-        # Since we are mocking the LLM here, we'll wrap the output in the <atlas_artifact> block manually.
+        # 4. Output & Deterministic Gateway Validation:
+        # We wrap the response and pass it through the Deterministic Gateway for zero-hallucination verification
         simulated_llm_output = (
             f"<atlas_artifact type=\"markdown\">\n"
             f"# {request.agent_id.replace('_', ' ').title()} Response\n\n"
-            f"Here is a step-by-step breakdown based on your context: {memory_context}\n\n"
+            f"Here is a step-by-step breakdown based on your active SCAAR memory context:\n{memory_context}\n\n"
             f"**Your Request:** {request.prompt}\n\n"
             f"Shall I proceed to step two?\n"
             f"</atlas_artifact>\n\n"
             f"*(Debug: {result['response']})*"
         )
-        result["response"] = simulated_llm_output
+        
+        gateway_res = DeterministicGateway.validate_and_correct(
+            DeterministicValidationRequest(output_text=simulated_llm_output, expected_schema="markdown", user_id=user_id)
+        )
+        result["response"] = gateway_res["validated_output"]
         
         return result
     except Exception as e:
