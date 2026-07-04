@@ -160,15 +160,38 @@ class KokoroTTSService:
     with built-in local acoustic synthesis fallback for offline resilience.
     """
     
-    @staticmethod
-    def generate_fallback_wav(text: str, duration_sec: float = None) -> bytes:
+    @classmethod
+    def generate_fallback_wav(cls, text: str, duration_sec: Optional[float] = None) -> bytes:
         """
-        Generates a valid, clean WAV audio file locally when the GPU voice server
-        is offline. Creates a pleasant acoustic chime followed by speech-rhythm
-        modulated audio so client audio players and 8-second VAD loops work seamlessly.
+        Generates a real speech WAV file using Windows native TTS (100% free, offline, zero API keys).
+        Falls back to acoustic synthesizer if OS speech engine is unavailable.
         """
+        try:
+            import os
+            import subprocess
+            import tempfile
+            
+            temp_wav = os.path.join(tempfile.gettempdir(), f"atlas_speech_{os.getpid()}_{int(time.time()*1000)}.wav")
+            # Clean text for PowerShell command
+            clean_text = text.replace('"', '').replace("'", "").replace('\n', ' ').strip()
+            ps_cmd = f"Add-Type -AssemblyName System.Speech; $s = New-Object System.Speech.Synthesis.SpeechSynthesizer; $s.SetOutputToWaveFile('{temp_wav}'); $s.Speak(\"{clean_text}\"); $s.Dispose()"
+            
+            res = subprocess.run(["powershell", "-NoProfile", "-Command", ps_cmd], capture_output=True, timeout=15)
+            if res.returncode == 0 and os.path.exists(temp_wav):
+                with open(temp_wav, "rb") as f:
+                    wav_bytes = f.read()
+                try:
+                    os.remove(temp_wav)
+                except Exception:
+                    pass
+                if len(wav_bytes) > 1000:
+                    logger.info(f"Generated Windows Native Speech WAV ({len(wav_bytes)} bytes)")
+                    return wav_bytes
+        except Exception as e:
+            logger.warning(f"Windows native speech fallback failed ({e}), using acoustic synthesizer.")
+
+        # Original acoustic sine-wave fallback if OS synthesizer is unavailable
         if duration_sec is None:
-            # Estimate duration based on word count (approx 150 words per min = 2.5 words/sec)
             words = max(1, len(text.split()))
             duration_sec = max(1.5, min(10.0, words / 2.5))
             
@@ -177,20 +200,12 @@ class KokoroTTSService:
         
         buffer = io.BytesIO()
         with wave.open(buffer, "wb") as wav_file:
-            wav_file.setnchannels(1)      # Mono
-            wav_file.setsampwidth(2)      # 16-bit
+            wav_file.setnchannels(1)
+            wav_file.setsampwidth(2)
             wav_file.setframerate(sample_rate)
-            
-            # Generate a soft, harmonic audio waveform simulating speech cadence
             for i in range(num_samples):
                 t = i / sample_rate
-                # Base speech frequency around 180Hz modulated by syllable rhythm (4Hz)
                 envelope = 0.5 * (1.0 + math.sin(2 * math.pi * 4.0 * t))
-                # Add slight decay at start and end
-                if t < 0.1:
-                    envelope *= (t / 0.1)
-                elif t > duration_sec - 0.2:
-                    envelope *= ((duration_sec - t) / 0.2)
                     
                 signal = math.sin(2 * math.pi * 180.0 * t) + 0.3 * math.sin(2 * math.pi * 360.0 * t)
                 val = int(3000 * signal * envelope)
@@ -232,9 +247,34 @@ class KokoroTTSService:
                 else:
                     logger.warning(f"Kokoro server returned status {response.status_code}: {response.text}. Using local fallback.")
         except Exception as e:
-            logger.info(f"Kokoro GPU server offline or unreachable ({e}). Engaging local fallback synthesizer.")
+            logger.info(f"Kokoro GPU server offline or unreachable ({e}). Engaging Edge/Native fallback synthesizer.")
             
-        # Local Fallback Synthesizer
+        # Try Edge Neural TTS (100% free, conversational AI voice, zero API keys)
+        try:
+            import edge_tts
+            import tempfile
+            import os
+            
+            temp_wav = os.path.join(tempfile.gettempdir(), f"atlas_edge_{os.getpid()}_{int(time.time()*1000)}.mp3")
+            # Choose appropriate Edge neural voice based on requested Kokoro profile
+            edge_voice = "en-GB-SoniaNeural" if ("sarah" in str(voice).lower() and "jessica" not in str(voice).lower()) else "en-US-JennyNeural"
+            communicate = edge_tts.Communicate(text, edge_voice)
+            await communicate.save(temp_wav)
+            if os.path.exists(temp_wav):
+                with open(temp_wav, "rb") as f:
+                    audio_bytes = f.read()
+                try:
+                    os.remove(temp_wav)
+                except Exception:
+                    pass
+                if len(audio_bytes) > 1000:
+                    latency = (time.perf_counter() - start_time) * 1000
+                    logger.info(f"Edge Neural TTS Success ({edge_voice}) | Size: {len(audio_bytes)} bytes | Latency: {latency:.1f}ms")
+                    return audio_bytes, False, latency
+        except Exception as edge_err:
+            logger.warning(f"Edge TTS fallback failed ({edge_err}), using Windows native speech.")
+
+        # Local Fallback Synthesizer (Windows Native Speech / Acoustic)
         audio_bytes = cls.generate_fallback_wav(text)
         latency = (time.perf_counter() - start_time) * 1000
         logger.info(f"Local Fallback Synthesis Complete | Size: {len(audio_bytes)} bytes | Latency: {latency:.1f}ms")
