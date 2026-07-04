@@ -6,14 +6,9 @@ groq==0.4.2
 openai==1.12.0
 chromadb
 supabase
-<<<<<<< Updated upstream
 reportlab
 python-docx
+python-multipart==0.0.18
 httpx
 edge-tts
 SpeechRecognition
-python-multipart
-=======
-httpx
-edge-tts
->>>>>>> Stashed changes
