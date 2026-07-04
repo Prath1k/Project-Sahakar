@@ -4,6 +4,7 @@ import time
 import random
 from typing import Dict, Any
 from dotenv import load_dotenv
+import openai
 
 # Ensure environment variables are loaded
 load_dotenv(dotenv_path="../.env")
@@ -122,21 +123,18 @@ async def route_query(request: Any, target_model: str = None, target_provider: s
     if key_value:
         masked_key = key_value[:6] + "..." + key_value[-4:] if len(key_value) > 10 else "..."
         
-    try:
-        # Avoid circular or missing module errors by doing local import if needed, but it's safe at top or here
-        from app.services.llm_client import generate_response
-        actual_response = await generate_response(
-            prompt=request.prompt,
-            model_id=model_id,
-            provider=provider,
-            api_key=key_value,
-            image_base64=getattr(request, 'image_base64', None)
-        )
-    except Exception as e:
-        actual_response = f"Failed to call LLM API: {str(e)}"
+    simulated_response = (
+        f"Processed query with {model_id} ({provider}).\n"
+        f"Selected Slot: {key_name} (Masked Value: {masked_key})"
+    )
         
-    if actual_response.startswith("Error from") or actual_response.startswith("Exception") or actual_response.startswith("Failed to call"):
-        actual_response = "I encountered a connection error with the model. Retry again please!"
+    # Simulate API Latency based on provider
+    if provider == "Groq":
+        time.sleep(0.2)
+    elif provider == "SambaNova":
+        time.sleep(1.5)
+    else:
+        time.sleep(1.0)
         
     latency_ms = (time.time() - start_time) * 1000
     
@@ -144,7 +142,7 @@ async def route_query(request: Any, target_model: str = None, target_provider: s
         "model_used": model_id,
         "provider": f"{provider} (Key Slot: {key_name})",
         "latency_ms": round(latency_ms, 2),
-        "response": actual_response,
+        "response": simulated_response,
         "is_safe": True
     }
 

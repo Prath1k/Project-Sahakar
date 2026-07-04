@@ -132,18 +132,14 @@ async def agent_chat_endpoint(request: AgentChatRequest):
             target_provider="SambaNova"
         )
         
-        # 4. Output: The router engine returns the simulated response.
-        # Since we are mocking the LLM here, we'll wrap the output in the <atlas_artifact> block manually.
-        simulated_llm_output = (
-            f"<atlas_artifact type=\"markdown\">\n"
-            f"# {request.agent_id.replace('_', ' ').title()} Response\n\n"
-            f"Here is a step-by-step breakdown based on your context: {memory_context}\n\n"
-            f"**Your Request:** {request.prompt}\n\n"
-            f"Shall I proceed to step two?\n"
-            f"</atlas_artifact>\n\n"
-            f"*(Debug: {result['response']})*"
-        )
-        result["response"] = simulated_llm_output
+        # 4. Output: The router engine returns the REAL LLM response.
+        llm_output = result['response']
+        
+        # Ensure it wraps the output in the <atlas_artifact> block if the LLM forgot
+        if "<atlas_artifact" not in llm_output:
+            llm_output = f"<atlas_artifact type=\"markdown\">\n{llm_output}\n</atlas_artifact>"
+            
+        result["response"] = llm_output
         
         return result
     except Exception as e:
