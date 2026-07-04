@@ -198,8 +198,8 @@ def main():
     else:
         print("\nOpenRouter key not found.")
 
-    # 6. Test SambaNova using SAMBANOVA_API_KEY_1
-    sambanova_key = os.environ.get("SAMBANOVA_API_KEY_1")
+    # 6. Test SambaNova using SAMBANOVA_API_KEY_8
+    sambanova_key = os.environ.get("SAMBANOVA_API_KEY_8")
     if sambanova_key:
         print("\nChecking SambaNova Routing...")
         res = check_openai_compatible(
