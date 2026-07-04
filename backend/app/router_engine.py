@@ -93,25 +93,25 @@ async def route_query(request: Any, target_model: str = None, target_provider: s
     provider = target_provider
     
     if not model_id or not provider:
-        if request.has_image:
-            model_id = "nvidia-nim-vision"
-            provider = "NVIDIA NIM"
+        if getattr(request, 'has_image', False):
+            model_id = "llama-3.2-90b-vision-preview"
+            provider = "Groq"
             
         elif prompt_length > LONG_CONTEXT_THRESHOLD:
-            model_id = "sambanova-llama-4-maverick"
+            model_id = "Meta-Llama-3.1-70B-Instruct"
             provider = "SambaNova"
             
         elif is_code_request:
-            model_id = "sambanova-deepseek-r1"
+            model_id = "Meta-Llama-3.1-405B-Instruct"
             provider = "SambaNova"
             
-        elif request.is_complex_artifact:
-            model_id = "gemini-1-5-pro"
+        elif getattr(request, 'is_complex_artifact', False):
+            model_id = "gemini-1.5-pro"
             provider = "Google AI Studio"
             
         else:
             # Default Chat
-            model_id = "groq-llama-3-3"
+            model_id = "llama-3.3-70b-versatile"
             provider = "Groq"
         
     # Fetch a random API key for the selected provider
@@ -122,18 +122,17 @@ async def route_query(request: Any, target_model: str = None, target_provider: s
     if key_value:
         masked_key = key_value[:6] + "..." + key_value[-4:] if len(key_value) > 10 else "..."
         
-    simulated_response = (
-        f"Processed query with {model_id} ({provider}).\n"
-        f"Selected Slot: {key_name} (Masked Value: {masked_key})"
-    )
-        
-    # Simulate API Latency based on provider
-    if provider == "Groq":
-        time.sleep(0.2)
-    elif provider == "SambaNova":
-        time.sleep(1.5)
-    else:
-        time.sleep(1.0)
+    try:
+        # Avoid circular or missing module errors by doing local import if needed, but it's safe at top or here
+        from app.services.llm_client import generate_response
+        actual_response = await generate_response(
+            prompt=request.prompt,
+            model_id=model_id,
+            provider=provider,
+            api_key=key_value
+        )
+    except Exception as e:
+        actual_response = f"Failed to call LLM API: {str(e)}"
         
     latency_ms = (time.time() - start_time) * 1000
     
@@ -141,7 +140,7 @@ async def route_query(request: Any, target_model: str = None, target_provider: s
         "model_used": model_id,
         "provider": f"{provider} (Key Slot: {key_name})",
         "latency_ms": round(latency_ms, 2),
-        "response": simulated_response,
+        "response": actual_response,
         "is_safe": True
     }
 

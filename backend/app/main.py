@@ -42,10 +42,10 @@ def read_root():
     return {"message": "Welcome to ATLAS API"}
 
 # Import Agent Routers
-from agents.career_architect import router as career_architect_router
-from agents.fiscal_sentinel import router as fiscal_sentinel_router
-from agents.biometrics_pilot import router as biometrics_pilot_router
-from voice_service import router as voice_router
+from app.agents.career_architect import router as career_architect_router
+from app.agents.fiscal_sentinel import router as fiscal_sentinel_router
+from app.agents.biometrics_pilot import router as biometrics_pilot_router
+from app.voice_service import router as voice_router
 
 app.include_router(career_architect_router, prefix="/api/career", tags=["CareerArchitect"])
 app.include_router(fiscal_sentinel_router, prefix="/api/fiscal", tags=["FiscalSentinel"])
@@ -77,7 +77,7 @@ async def chat_endpoint(request: ChatRequest):
     Handle chat queries using the Intelligent Brain Auto-Router.
     """
     try:
-        from router_engine import route_query
+        from app.router_engine import route_query
         result = await route_query(request)
         return result
     except Exception as e:
@@ -89,8 +89,8 @@ async def agent_chat_endpoint(request: AgentChatRequest):
     Handle agent chat queries with "First Interaction" Logic using the Agent Factory.
     """
     try:
-        from router_engine import route_query
-        from agents.factory import build_full_prompt
+        from app.router_engine import route_query
+        from app.agents.factory import build_full_prompt
         
         # 1. RAG Layer: Mock querying Supabase for facts
         memory_context = "User is currently studying Networking 101. Exam is in 2 weeks."
