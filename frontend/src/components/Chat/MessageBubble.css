@@ -1,0 +1,128 @@
+.message-row {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+.user-row {
+  /* ChatGPT puts both sides aligned, just different backgrounds or identical.
+     We will keep them centered but distinct styling. */
+}
+
+.message-container {
+  display: flex;
+  gap: 16px;
+  max-width: 800px;
+  width: 100%;
+  padding: 0 16px;
+}
+
+.message-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background-color: var(--border-color);
+  color: var(--text-muted);
+}
+
+.ai-avatar-img {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+  filter: invert(1);
+}
+
+body.dark-mode .ai-avatar-img {
+  filter: none;
+}
+
+
+.message-content {
+  flex: 1;
+  min-width: 0;
+  padding-top: 4px;
+}
+
+.message-text {
+  font-size: 1rem;
+  color: var(--text-main);
+  white-space: pre-wrap;
+}
+
+.message-footer {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.message-actions-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 12px;
+}
+
+.action-icons {
+  display: flex;
+  gap: 8px;
+}
+
+.icon-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.icon-btn:hover {
+  background-color: var(--border-color);
+  color: var(--text-main);
+}
+
+.message-image-preview {
+  margin-bottom: 12px;
+}
+
+.message-image-preview img {
+  max-width: 300px;
+  max-height: 300px;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  object-fit: cover;
+}
+
+.artifact-trigger {
+  margin-top: 12px;
+  font-size: 0.8rem;
+  padding: 6px 12px;
+}
+
+/* Skeletons */
+.thinking-skeleton {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.skeleton-pulse {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background-color: var(--primary-accent);
+  animation: pulse-skeleton 1.5s infinite ease-in-out;
+}
+
+.status-text {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  font-style: italic;
+}

@@ -4,6 +4,7 @@ import time
 import random
 from typing import Dict, Any
 from dotenv import load_dotenv
+import openai
 
 # Ensure environment variables are loaded
 load_dotenv(dotenv_path="../.env")
@@ -93,25 +94,25 @@ async def route_query(request: Any, target_model: str = None, target_provider: s
     provider = target_provider
     
     if not model_id or not provider:
-        if request.has_image:
-            model_id = "nvidia-nim-vision"
-            provider = "NVIDIA NIM"
+        if getattr(request, 'has_image', False):
+            model_id = "llama-3.2-90b-vision-preview"
+            provider = "Groq"
             
         elif prompt_length > LONG_CONTEXT_THRESHOLD:
-            model_id = "sambanova-llama-4-maverick"
+            model_id = "Meta-Llama-3.1-70B-Instruct"
             provider = "SambaNova"
             
         elif is_code_request:
-            model_id = "sambanova-deepseek-r1"
+            model_id = "Meta-Llama-3.1-405B-Instruct"
             provider = "SambaNova"
             
-        elif request.is_complex_artifact:
-            model_id = "gemini-1-5-pro"
+        elif getattr(request, 'is_complex_artifact', False):
+            model_id = "gemini-1.5-pro"
             provider = "Google AI Studio"
             
         else:
             # Default Chat
-            model_id = "groq-llama-3-3"
+            model_id = "llama-3.3-70b-versatile"
             provider = "Groq"
         
     # Fetch a random API key for the selected provider

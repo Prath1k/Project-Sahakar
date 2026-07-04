@@ -1,0 +1,42 @@
+.artifact-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background-color: var(--bg-surface);
+}
+
+.artifact-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border-color);
+  background-color: var(--bg-main);
+}
+
+.artifact-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin: 0;
+  color: var(--text-main);
+}
+
+.artifact-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.artifact-content {
+  flex: 1;
+  padding: 24px;
+  overflow-y: auto;
+  font-family: 'Inter', monospace;
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+.artifact-content pre {
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  color: var(--text-main);
+}

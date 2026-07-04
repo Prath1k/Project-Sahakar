@@ -2,6 +2,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import os
+from typing import Optional
 from dotenv import load_dotenv
 
 # Load environment variables
@@ -24,6 +25,8 @@ class ChatRequest(BaseModel):
     has_image: bool = False
     is_complex_artifact: bool = False
     user_id: str = "user_sricharan_default"
+    image_base64: Optional[str] = None
+    override_model: Optional[str] = None
 
 class AgentChatRequest(BaseModel):
     agent_id: str = "scholar_core"
@@ -83,8 +86,25 @@ async def chat_endpoint(request: ChatRequest):
     Handle chat queries using the Intelligent Brain Auto-Router.
     """
     try:
-        from router_engine import route_query
-        result = await route_query(request)
+        from app.router_engine import route_query
+        
+        target_model = None
+        target_provider = None
+        mo = getattr(request, 'override_model', None)
+        if mo == "Groq":
+            target_model = "llama-3.3-70b-versatile"
+            target_provider = "Groq"
+        elif mo == "SambaNova":
+            target_model = "Meta-Llama-3.1-405B-Instruct"
+            target_provider = "SambaNova"
+        elif mo == "Nvidia":
+            target_model = "meta/llama-3.2-90b-vision-instruct"
+            target_provider = "NVIDIA NIM"
+        elif mo == "Cerebras":
+            target_model = "llama3.1-8b"
+            target_provider = "Cerebras"
+            
+        result = await route_query(request, target_model=target_model, target_provider=target_provider)
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -129,22 +149,16 @@ async def agent_chat_endpoint(request: AgentChatRequest):
             target_provider="SambaNova"
         )
         
-        # 4. Output & Deterministic Gateway Validation:
-        # We wrap the response and pass it through the Deterministic Gateway for zero-hallucination verification
-        simulated_llm_output = (
-            f"<atlas_artifact type=\"markdown\">\n"
-            f"# {request.agent_id.replace('_', ' ').title()} Response\n\n"
-            f"Here is a step-by-step breakdown based on your active SCAAR memory context:\n{memory_context}\n\n"
-            f"**Your Request:** {request.prompt}\n\n"
-            f"Shall I proceed to step two?\n"
-            f"</atlas_artifact>\n\n"
-            f"*(Debug: {result['response']})*"
-        )
+        # 4. Output: Validate real LLM response through Deterministic Gateway after ensuring wrapper
+        llm_output = result['response']
+        # Ensure it wraps the output in the <atlas_artifact> block if the LLM forgot
+        if "<atlas_artifact" not in llm_output:
+            llm_output = f"<atlas_artifact type=\"markdown\">\n{llm_output}\n</atlas_artifact>"
         
         gateway_res = DeterministicGateway.validate_and_correct(
-            DeterministicValidationRequest(output_text=simulated_llm_output, expected_schema="markdown", user_id=user_id)
+            DeterministicValidationRequest(output_text=llm_output, expected_schema="markdown", user_id=user_id)
         )
-        result["response"] = gateway_res["validated_output"]
+        result["response"] = gateway_res.get("validated_output", llm_output)
         
         return result
     except Exception as e:
