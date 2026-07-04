@@ -2,11 +2,11 @@ import React from 'react';
 import { Sun, Moon, Menu } from 'lucide-react';
 import './Navbar.css';
 
-const Navbar = ({ isDarkMode, toggleTheme }) => {
+const Navbar = ({ isDarkMode, toggleTheme, toggleSidebar }) => {
   return (
     <nav className="navbar">
       <div className="navbar-left">
-        <button className="btn-silver btn-icon">
+        <button className="btn-silver btn-icon" onClick={toggleSidebar} title="Menu">
           <Menu size={18} />
         </button>
       </div>

@@ -10,11 +10,11 @@ const ChatInput = ({ onSendMessage, disabled, isListening, onMicClick }) => {
   const fileInputRef = React.useRef(null);
 
   const models = [
-    { id: 'Auto', name: '🌟 Auto (Intelligent Routing)' },
-    { id: 'Groq', name: '⚡ Groq (Llama 3.3)' },
-    { id: 'SambaNova', name: '🧠 SambaNova (DeepSeek)' },
-    { id: 'Nvidia', name: '👁️ NVIDIA NIM (Vision)' },
-    { id: 'Cerebras', name: '🚀 Cerebras (Qwen 3)' }
+    { id: 'Auto', name: 'Auto (Intelligent Routing)' },
+    { id: 'Groq', name: 'Groq (Llama 3.3)' },
+    { id: 'SambaNova', name: 'SambaNova (DeepSeek)' },
+    { id: 'Nvidia', name: 'NVIDIA NIM (Vision)' },
+    { id: 'Cerebras', name: 'Cerebras (Qwen 3)' }
   ];
 
   const handleSubmit = (e) => {
