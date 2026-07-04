@@ -257,7 +257,8 @@ body {
     border-color: var(--border);
   }
   body {
-    @apply bg-background text-foreground;
+    background-color: var(--background);
+    color: var(--foreground);
   }
   html {
     @apply font-sans;

@@ -1,12 +1,12 @@
 from fastapi import FastAPI, HTTPException
+# Trigger reload to load new pip dependencies
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-import os
 from typing import Optional
 from dotenv import load_dotenv
 
 # Load environment variables
-load_dotenv(dotenv_path="../.env")
+load_dotenv(dotenv_path="../../.env")
 
 # Initialize FastAPI
 app = FastAPI(title="ATLAS Backend API")
@@ -86,7 +86,7 @@ async def chat_endpoint(request: ChatRequest):
     Handle chat queries using the Intelligent Brain Auto-Router.
     """
     try:
-        from app.router_engine import route_query
+        from router_engine import route_query
         
         target_model = None
         target_provider = None

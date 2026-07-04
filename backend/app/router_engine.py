@@ -4,10 +4,9 @@ import time
 import random
 from typing import Dict, Any
 from dotenv import load_dotenv
-import openai
 
 # Ensure environment variables are loaded
-load_dotenv(dotenv_path="../.env")
+load_dotenv(dotenv_path="../../.env")
 
 LONG_CONTEXT_THRESHOLD = 3000 # characters
 
@@ -117,24 +116,18 @@ async def route_query(request: Any, target_model: str = None, target_provider: s
         
     # Fetch a random API key for the selected provider
     key_name, key_value = get_random_api_key(provider)
+        
+    from services.llm_client import generate_response
     
-    # Mask the key for display/logging security
-    masked_key = "Not Configured"
-    if key_value:
-        masked_key = key_value[:6] + "..." + key_value[-4:] if len(key_value) > 10 else "..."
-        
-    simulated_response = (
-        f"Processed query with {model_id} ({provider}).\n"
-        f"Selected Slot: {key_name} (Masked Value: {masked_key})"
+    # Actually call the LLM
+    image_base64 = getattr(request, 'image_base64', None)
+    actual_response = await generate_response(
+        prompt=request.prompt,
+        model_id=model_id,
+        provider=provider,
+        api_key=key_value,
+        image_base64=image_base64
     )
-        
-    # Simulate API Latency based on provider
-    if provider == "Groq":
-        time.sleep(0.2)
-    elif provider == "SambaNova":
-        time.sleep(1.5)
-    else:
-        time.sleep(1.0)
         
     latency_ms = (time.time() - start_time) * 1000
     
@@ -142,7 +135,7 @@ async def route_query(request: Any, target_model: str = None, target_provider: s
         "model_used": model_id,
         "provider": f"{provider} (Key Slot: {key_name})",
         "latency_ms": round(latency_ms, 2),
-        "response": simulated_response,
+        "response": actual_response,
         "is_safe": True
     }
 
