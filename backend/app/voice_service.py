@@ -174,7 +174,7 @@ class KokoroTTSService:
             temp_wav = os.path.join(tempfile.gettempdir(), f"atlas_speech_{os.getpid()}_{int(time.time()*1000)}.wav")
             # Clean text for PowerShell command
             clean_text = text.replace('"', '').replace("'", "").replace('\n', ' ').strip()
-            ps_cmd = f"Add-Type -AssemblyName System.Speech; $s = New-Object System.Speech.Synthesis.SpeechSynthesizer; $s.SetOutputToWaveFile('{temp_wav}'); $s.Speak(\"{clean_text}\"); $s.Dispose()"
+            ps_cmd = f"Add-Type -AssemblyName System.Speech; $s = New-Object System.Speech.Synthesis.SpeechSynthesizer; foreach ($v in $s.GetInstalledVoices()) {{ if ($v.VoiceInfo.Gender -eq 'Female') {{ $s.SelectVoice($v.VoiceInfo.Name); break }} }}; $s.SetOutputToWaveFile('{temp_wav}'); $s.Speak(\"{clean_text}\"); $s.Dispose()"
             
             res = subprocess.run(["powershell", "-NoProfile", "-Command", ps_cmd], capture_output=True, timeout=15)
             if res.returncode == 0 and os.path.exists(temp_wav):
@@ -257,7 +257,14 @@ class KokoroTTSService:
             
             temp_wav = os.path.join(tempfile.gettempdir(), f"atlas_edge_{os.getpid()}_{int(time.time()*1000)}.mp3")
             # Choose appropriate Edge neural voice based on requested Kokoro profile
-            edge_voice = "en-GB-SoniaNeural" if ("sarah" in str(voice).lower() and "jessica" not in str(voice).lower()) else "en-US-JennyNeural"
+            edge_voice_map = {
+                "af_sarah": "en-US-AriaNeural",
+                "am_michael": "en-US-GuyNeural",
+                "bf_emma": "en-GB-SoniaNeural",
+                "am_adam": "en-US-ChristopherNeural",
+                "af_bella": "en-US-JennyNeural"
+            }
+            edge_voice = edge_voice_map.get(str(voice).lower(), "en-US-AriaNeural")
             communicate = edge_tts.Communicate(text, edge_voice)
             await communicate.save(temp_wav)
             if os.path.exists(temp_wav):

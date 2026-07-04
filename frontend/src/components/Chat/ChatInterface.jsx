@@ -5,12 +5,13 @@ import { useVoiceHandoff } from '../../hooks/useVoiceHandoff';
 import { GlyphMatrix } from "@/components/ui/glyph-matrix";
 import './ChatInterface.css';
 
-const ChatInterface = ({ onOpenArtifact }) => {
+const ChatInterface = ({ onOpenArtifact, activeAgent }) => {
   const [messages, setMessages] = useState([
     { id: 1, text: 'Hello! I am your autonomous task and learning assistant. How can I help you today?', sender: 'ai' }
   ]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isVoiceMode, setIsVoiceMode] = useState(false);
+  const [isAutoSpeak, setIsAutoSpeak] = useState(true);
   const messagesEndRef = useRef(null);
   
   const { isListening, startEightSecondListeningLoop, stopListening, speakAtlasResponse } = useVoiceHandoff();
@@ -70,16 +71,24 @@ const ChatInterface = ({ onOpenArtifact }) => {
     setIsGenerating(true);
 
     try {
+      const endpoint = activeAgent && activeAgent.id ? '/agent/chat' : '/chat';
+      const bodyPayload = activeAgent && activeAgent.id ? {
+        agent_id: activeAgent.id,
+        prompt: text || "Please describe this image.",
+        has_image: !!imageBase64,
+        image_base64: imageBase64
+      } : {
+        prompt: text || "Please describe this image.",
+        has_image: !!imageBase64,
+        image_base64: imageBase64,
+        override_model: model !== 'Auto' ? model : null
+      };
+
       // Send request to actual backend
-      const res = await fetch('/chat', {
+      const res = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          prompt: text || "Please describe this image.",
-          has_image: !!imageBase64,
-          image_base64: imageBase64,
-          override_model: model !== 'Auto' ? model : null
-        })
+        body: JSON.stringify(bodyPayload)
       });
       
       const data = await res.json();
@@ -113,8 +122,8 @@ const ChatInterface = ({ onOpenArtifact }) => {
         onOpenArtifact({ title: 'Generated Artifact', content: artifactContent });
       }
 
-      // Only play TTS response if Voice Mode is explicitly toggled ON
-      if (isVoiceMode) {
+      // Play TTS response if Auto-Speak OR Voice Mode is toggled ON
+      if (isVoiceMode || isAutoSpeak) {
         speakAtlasResponse(responseText);
       }
 
@@ -131,6 +140,29 @@ const ChatInterface = ({ onOpenArtifact }) => {
 
   return (
     <div className="chat-interface">
+      <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '8px 16px', borderBottom: '1px solid var(--border)', background: 'var(--bg-main)' }}>
+        <button 
+          onClick={() => setIsAutoSpeak(!isAutoSpeak)}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            padding: '4px 12px',
+            borderRadius: '20px',
+            fontSize: '0.8rem',
+            fontWeight: '600',
+            border: '1px solid var(--border)',
+            background: isAutoSpeak ? 'var(--primary)' : 'transparent',
+            color: isAutoSpeak ? '#fff' : 'var(--text-muted)',
+            cursor: 'pointer',
+            transition: 'all 0.2s'
+          }}
+          title="Toggle automatic speech synthesis for AI responses"
+        >
+          <span>{isAutoSpeak ? '🔊' : '🔇'}</span>
+          <span>Auto-Speak: {isAutoSpeak ? 'ON' : 'OFF'}</span>
+        </button>
+      </div>
       <div className="chat-messages">
         {messages.map((msg) => (
           <MessageBubble 
@@ -138,6 +170,7 @@ const ChatInterface = ({ onOpenArtifact }) => {
             message={msg} 
             onOpenArtifact={() => msg.hasArtifact && onOpenArtifact({ title: 'Generated Plan', content: '# Sample Plan' })}
             onRetry={handleRetry}
+            onSpeak={(text) => speakAtlasResponse(text)}
           />
         ))}
         {isGenerating && (

@@ -74,15 +74,49 @@ def get_models():
         "models": [
             {"id": "groq-llama-3-3", "name": "Groq Llama 3.3 70B", "provider": "Groq", "purpose": "Default chat, UI scripting"},
             {"id": "sambanova-deepseek-r1", "name": "DeepSeek R1", "provider": "SambaNova", "purpose": "Complex code, reasoning"},
-            {"id": "sambanova-llama-4-maverick", "name": "Llama-4-Maverick", "provider": "SambaNova", "purpose": "Long context, multi-document"},
+            {"id": "sambanova-llama-405b", "name": "Llama-3.1-405B", "provider": "SambaNova", "purpose": "Long context, multi-document"},
             {"id": "cerebras-qwen", "name": "Qwen 3-235B", "provider": "Cerebras", "purpose": "High-throughput batch"},
             {"id": "gemini-1-5-pro", "name": "Gemini 1.5 Pro", "provider": "Google AI Studio", "purpose": "Complex artifacts"},
             {"id": "nvidia-nim-vision", "name": "Vision Models", "provider": "NVIDIA NIM", "purpose": "Vision tasks"}
         ]
     }
 
-# We will import the router engine later once it is created
-# from router_engine import route_query
+def auto_ingest_user_memory(user_id: str, prompt: str):
+    """
+    Automatically detects declarative statements or user facts and ingests them into RAG memory.
+    """
+    try:
+        from scaar_engine import ReconciliationEngine, DocumentOceanEngine, FactAddRequest, DocumentIngestRequest
+        prompt_lower = prompt.lower().strip()
+        # Don't ingest simple questions or greetings
+        if prompt_lower.startswith(("what ", "why ", "how ", "who ", "where ", "when ", "can you", "could you", "do you", "is there", "are there", "hello", "hi ", "hey")):
+            return
+            
+        fact_keywords = ["my ", "our ", "we ", "i am", "i'm", "remember", "note that", "is ", "code is", "region", "deploy", "study", "name is", "live in", "budget", "burn rate", "using", "project", "prefer", "favorite", "created", "built"]
+        if any(kw in prompt_lower for kw in fact_keywords) and len(prompt) > 10:
+            cat = "general"
+            if any(w in prompt_lower for w in ["code", "region", "deploy", "server", "project", "using", "built"]):
+                cat = "project"
+            elif any(w in prompt_lower for w in ["name", "call me", "i am", "my", "prefer"]):
+                cat = "personal"
+            elif any(w in prompt_lower for w in ["live in", "from", "located"]):
+                cat = "location"
+            elif any(w in prompt_lower for w in ["study", "exam", "course", "grade"]):
+                cat = "study"
+            elif any(w in prompt_lower for w in ["burn rate", "budget", "salary", "cost"]):
+                cat = "finance"
+                
+            # Record in SQLite Fact Brain (with contradiction reconciliation)
+            ReconciliationEngine.add_fact_with_reconciliation(FactAddRequest(
+                user_id=user_id, fact_text=prompt, category=cat, source="chat_auto_ingest"
+            ))
+            # Record in ChromaDB Document Ocean for semantic similarity search
+            DocumentOceanEngine.ingest_document(DocumentIngestRequest(
+                user_id=user_id, title=f"User Chat Note ({cat})", text_content=prompt, category=cat
+            ))
+            print(f"🧠 [RAG Auto-Ingest] Recorded new fact in category '{cat}': '{prompt}'")
+    except Exception as e:
+        print(f"[RAG Auto-Ingest Error]: {e}")
 
 @app.post("/chat", response_model=ChatResponse)
 async def chat_endpoint(request: ChatRequest):
@@ -94,6 +128,10 @@ async def chat_endpoint(request: ChatRequest):
         from scaar_engine import ReconciliationEngine, DocumentOceanEngine, RAGSearchRequest
         
         user_id = getattr(request, "user_id", "user_sricharan_default")
+        
+        # Auto-ingest new user facts before querying
+        auto_ingest_user_memory(user_id, request.prompt)
+        
         fact_header = ReconciliationEngine.format_memory_header(user_id)
         
         doc_chunks = DocumentOceanEngine.search_vectors(RAGSearchRequest(user_id=user_id, query=request.prompt, top_k=2))
@@ -114,7 +152,7 @@ async def chat_endpoint(request: ChatRequest):
             target_model = "Meta-Llama-3.1-405B-Instruct"
             target_provider = "SambaNova"
         elif mo == "Nvidia":
-            target_model = "meta/llama-3.2-90b-vision-instruct"
+            target_model = "meta/llama-3.1-70b-instruct" if not getattr(request, 'has_image', False) else "meta/llama-3.2-90b-vision-instruct"
             target_provider = "NVIDIA NIM"
         elif mo == "Cerebras":
             target_model = "llama3.1-8b"
@@ -135,8 +173,12 @@ async def agent_chat_endpoint(request: AgentChatRequest):
         from agents.factory import build_full_prompt
         from scaar_engine import ReconciliationEngine, DocumentOceanEngine, RAGSearchRequest, DeterministicGateway, DeterministicValidationRequest
         
-        # 1. SCAAR RAG Layer: Dynamically retrieve reconciled atomic facts from The Fact Brain
         user_id = getattr(request, "user_id", "user_sricharan_default")
+        
+        # Auto-ingest new user facts before querying
+        auto_ingest_user_memory(user_id, request.prompt)
+        
+        # 1. SCAAR RAG Layer: Dynamically retrieve reconciled atomic facts from The Fact Brain
         fact_header = ReconciliationEngine.format_memory_header(user_id)
         
         # Also perform cosine similarity search across vectorized textbooks & study guides in The Document Ocean
@@ -158,11 +200,11 @@ async def agent_chat_endpoint(request: AgentChatRequest):
             user_id=user_id
         )
         
-        # 3. Router: Send to SambaNova (Llama-4-Maverick) as requested
+        # 3. Router: Send to Groq (Llama-3.3-70B) for agent queries (fast + free)
         result = await route_query(
             router_request, 
-            target_model="sambanova-llama-4-maverick", 
-            target_provider="SambaNova"
+            target_model="llama-3.3-70b-versatile", 
+            target_provider="Groq"
         )
         
         # 4. Output: Validate real LLM response through Deterministic Gateway after ensuring wrapper

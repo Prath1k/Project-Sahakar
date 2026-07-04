@@ -12,3 +12,6 @@ python-multipart==0.0.18
 httpx
 edge-tts
 SpeechRecognition
+langchain-core
+email-validator
+e2b-code-interpreter

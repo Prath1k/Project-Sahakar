@@ -14,6 +14,12 @@ function App() {
   const [isArtifactOpen, setIsArtifactOpen] = useState(false);
   const [activeArtifact, setActiveArtifact] = useState(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [activeAgent, setActiveAgent] = useState({ id: null, name: '⚡ General ATLAS' });
+
+  const handleSelectAgent = (agentId, agentName) => {
+    setActiveAgent({ id: agentId, name: agentName });
+    setIsSidebarOpen(false);
+  };
 
   useEffect(() => {
     if (isDarkMode) {
@@ -66,14 +72,15 @@ function App() {
 
   return (
     <div className="app-container">
-      <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} userEmail={session?.user?.email || (isGuest ? 'Guest User' : null)} onSignOut={() => setIsGuest(false)} />
+      <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} userEmail={session?.user?.email || (isGuest ? 'Guest User' : null)} onSignOut={() => setIsGuest(false)} activeAgent={activeAgent} onSelectAgent={handleSelectAgent} />
       <div className="chat-container">
         <Navbar 
           isDarkMode={isDarkMode} 
           toggleTheme={toggleTheme} 
           toggleSidebar={toggleSidebar}
+          activeAgent={activeAgent}
         />
-        <ChatInterface onOpenArtifact={handleOpenArtifact} />
+        <ChatInterface onOpenArtifact={handleOpenArtifact} activeAgent={activeAgent} />
       </div>
       
       <div className={`artifact-container ${isArtifactOpen ? 'open' : ''}`}>

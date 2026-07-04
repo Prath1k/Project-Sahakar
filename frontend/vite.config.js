@@ -13,7 +13,9 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': 'http://127.0.0.1:8000',
-      '/chat': 'http://127.0.0.1:8000'
+      '/chat': 'http://127.0.0.1:8000',
+      '/agent': 'http://127.0.0.1:8000',
+      '/models': 'http://127.0.0.1:8000'
     }
   }
 })

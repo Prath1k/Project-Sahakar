@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Bot, User, LayoutPanelLeft, Copy, Check, ThumbsUp, ThumbsDown, RefreshCw, MoreHorizontal } from 'lucide-react';
+import { Bot, User, LayoutPanelLeft, Copy, Check, ThumbsUp, ThumbsDown, RefreshCw, MoreHorizontal, Volume2 } from 'lucide-react';
 import './MessageBubble.css';
 
-const MessageBubble = ({ message, onOpenArtifact, onRetry }) => {
+const MessageBubble = ({ message, onOpenArtifact, onRetry, onSpeak }) => {
   const isUser = message.sender === 'user';
   
   // Status rotation for "thinking"
@@ -62,6 +62,9 @@ const MessageBubble = ({ message, onOpenArtifact, onRetry }) => {
                   <div className="action-icons">
                     <button className="icon-btn" title="Copy" onClick={handleCopy}>
                       {copied ? <Check size={15} className="text-green-500" /> : <Copy size={15} />}
+                    </button>
+                    <button className="icon-btn" title="Read Aloud" onClick={() => onSpeak && onSpeak(message.text)}>
+                      <Volume2 size={15} />
                     </button>
                     <button className="icon-btn" title="Good Response"><ThumbsUp size={15} /></button>
                     <button className="icon-btn" title="Bad Response"><ThumbsDown size={15} /></button>
