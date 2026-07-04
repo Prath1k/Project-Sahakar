@@ -61,6 +61,10 @@ app.include_router(voice_router, prefix="/api/tts", tags=["Voice & TTS"])
 app.include_router(auth_router, prefix="/api/auth", tags=["Auth & Identity"])
 app.include_router(rag_router, prefix="/api/memory", tags=["SCAAR Memory & RAG"])
 
+# Import and include Export Router
+from app.endpoints.export import router as export_router
+app.include_router(export_router, prefix="/export", tags=["Exports"])
+
 
 
 @app.get("/models")

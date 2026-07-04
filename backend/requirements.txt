@@ -6,3 +6,5 @@ groq==0.4.2
 openai==1.12.0
 chromadb
 supabase
+reportlab
+python-docx
