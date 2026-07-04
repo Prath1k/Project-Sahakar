@@ -252,3 +252,15 @@ dmypy.json
 
 # Cython debug symbols
 cython_debug/
+
+# ATLAS / SCAAR Vector Database & Audio Artifacts
+chroma_storage/
+*.sqlite3
+*.sqlite3-journal
+*.bin
+*.wav
+*.mp3
+test_audio_output/
+turn1_reply.wav
+turn2_reply.wav
+live_reply.wav

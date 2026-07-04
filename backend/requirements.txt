@@ -8,3 +8,7 @@ chromadb
 supabase
 reportlab
 python-docx
+httpx
+edge-tts
+SpeechRecognition
+python-multipart

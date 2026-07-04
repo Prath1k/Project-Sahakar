@@ -51,6 +51,7 @@ from agents.career_architect import router as career_architect_router
 from agents.fiscal_sentinel import router as fiscal_sentinel_router
 from agents.biometrics_pilot import router as biometrics_pilot_router
 from voice_service import router as voice_router
+from stt_service import router as stt_router
 from auth_service import router as auth_router
 from rag_router import router as rag_router
 
@@ -58,6 +59,7 @@ app.include_router(career_architect_router, prefix="/api/career", tags=["CareerA
 app.include_router(fiscal_sentinel_router, prefix="/api/fiscal", tags=["FiscalSentinel"])
 app.include_router(biometrics_pilot_router, prefix="/api/biometrics", tags=["BiometricsPilot"])
 app.include_router(voice_router, prefix="/api/tts", tags=["Voice & TTS"])
+app.include_router(stt_router, prefix="/api/stt", tags=["Speech-To-Text & Ears"])
 app.include_router(auth_router, prefix="/api/auth", tags=["Auth & Identity"])
 app.include_router(rag_router, prefix="/api/memory", tags=["SCAAR Memory & RAG"])
 
