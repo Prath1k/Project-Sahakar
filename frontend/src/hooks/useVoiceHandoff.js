@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback } from 'react';
+import { API_BASE_URL } from '@/lib/config';
 
 export function useVoiceHandoff(onSpeechDetected) {
   const [isListening, setIsListening] = useState(false);
@@ -91,7 +92,7 @@ export function useVoiceHandoff(onSpeechDetected) {
 
   const speakAtlasResponse = useCallback(async (text, agentRole = '', messageType = 'general', urgency = 'normal') => {
     try {
-      const response = await fetch('/api/tts/speak', {
+      const response = await fetch(`${API_BASE_URL}/api/tts/speak`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text, agent_role: agentRole, message_type: messageType, urgency })

@@ -3,6 +3,7 @@ import MessageBubble from './MessageBubble';
 import ChatInput from '../Input/ChatInput';
 import { useVoiceHandoff } from '../../hooks/useVoiceHandoff';
 import { GlyphMatrix } from "@/components/ui/glyph-matrix";
+import { API_BASE_URL } from "@/lib/config";
 import './ChatInterface.css';
 
 const ChatInterface = ({ onOpenArtifact, activeAgent }) => {
@@ -85,7 +86,7 @@ const ChatInterface = ({ onOpenArtifact, activeAgent }) => {
       };
 
       // Send request to actual backend
-      const res = await fetch(endpoint, {
+      const res = await fetch(`${API_BASE_URL}${endpoint}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(bodyPayload)
