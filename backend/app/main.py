@@ -1,5 +1,5 @@
 from fastapi import FastAPI, HTTPException
-# Trigger reload to load new pip dependencies
+# Trigger reload: Sterile RAG & Chat Memory architecture deployed (2026-07-05)
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Optional, List, Dict, Any
