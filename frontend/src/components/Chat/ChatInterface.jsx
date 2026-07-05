@@ -103,14 +103,22 @@ const ChatInterface = ({ onOpenArtifact, activeAgent, loadedMessages, selectedMo
     }
   };
 
-  const handleSendMessage = async (text, model = null, imageBase64 = null, attachedFile = null) => {
+  const handleSendMessage = async (text, model = null, imageBase64 = null, attachedFile = null, selectedParams = {}) => {
     const effectiveModel = model || selectedModel || 'Auto';
     if (!text.trim() && !imageBase64 && !attachedFile) return;
     stopCurrentSpeech();
 
+    let formattedPrompt = text || (attachedFile ? `Uploaded document: **${attachedFile.name}**` : "Attached an image for analysis.");
+    if (selectedParams && Object.keys(selectedParams).length > 0) {
+      const paramsList = Object.entries(selectedParams)
+        .map(([key, val]) => `• **${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}**: \`${val}\``)
+        .join('\n');
+      formattedPrompt = `**[Selected Agent Parameters]**:\n${paramsList}\n\n**User Question**:\n${text || "Please analyze."}`;
+    }
+
     const newUserMsg = { 
       id: Date.now(), 
-      text: text || (attachedFile ? `Uploaded document: **${attachedFile.name}**` : "Attached an image for analysis."), 
+      text: formattedPrompt, 
       sender: 'user',
       hasImage: !!imageBase64,
       imageBase64,
@@ -176,11 +184,12 @@ const ChatInterface = ({ onOpenArtifact, activeAgent, loadedMessages, selectedMo
       const endpoint = activeAgent && activeAgent.id ? '/agent/chat' : '/chat';
       const bodyPayload = activeAgent && activeAgent.id ? {
         agent_id: activeAgent.id,
-        prompt: text || "Please analyze this image.",
+        prompt: formattedPrompt,
+        parameters: selectedParams,
         has_image: !!imageBase64,
         image_base64: imageBase64
       } : {
-        prompt: text || "Please analyze this image.",
+        prompt: formattedPrompt,
         has_image: !!imageBase64,
         image_base64: imageBase64,
         override_model: effectiveModel !== 'Auto' ? effectiveModel : null
@@ -275,12 +284,13 @@ const ChatInterface = ({ onOpenArtifact, activeAgent, loadedMessages, selectedMo
       {/* Input Area */}
       <div className="chat-input-wrapper">
         <ChatInput 
-          onSendMessage={(text, imageBase64, attachedFile) => handleSendMessage(text, null, imageBase64, attachedFile)} 
+          onSendMessage={(text, imageBase64, attachedFile, selectedParams) => handleSendMessage(text, null, imageBase64, attachedFile, selectedParams)} 
           disabled={isGenerating} 
           isListening={isListening}
           onMicClick={handleToggleVoiceMode}
           isAutoSpeak={isAutoSpeak}
           onToggleAutoSpeak={() => setIsAutoSpeak(prev => !prev)}
+          activeAgent={activeAgent}
         />
       </div>
     </div>

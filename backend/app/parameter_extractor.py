@@ -584,6 +584,26 @@ class DynamicParameterCollector:
             "ui_elements": ui_metadata
         }
 
+def get_agent_schema(agent_id: str) -> Dict[str, Any]:
+    """
+    Maps ATLAS's 7 intelligent agent IDs to their corresponding Project Sambhav parameter schemas.
+    """
+    agent_mapping = {
+        "scholar_core": ["student", "high_school"],
+        "career_architect": ["job_life", "behavioral"],
+        "fiscal_sentinel": ["financial"],
+        "velocity_form": ["fitness"],
+        "biometrics_pilot": ["health"],
+        "zenith_counsel": ["mental_health"],
+        "nexus_strategist": ["pragma", "claim", "sarvagna"]
+    }
+    
+    domain_keys = agent_mapping.get(agent_id, [])
+    return {
+        "agent_id": agent_id,
+        "schemas": {k: DOMAIN_SCHEMAS[k] for k in domain_keys if k in DOMAIN_SCHEMAS}
+    }
+
 # Example Usage & Verification block
 if __name__ == "__main__":
     collector = DynamicParameterCollector()

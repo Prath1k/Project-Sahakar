@@ -1,11 +1,13 @@
 import React, { useState, useRef } from 'react';
 import { Send, Mic, Paperclip, X, FileText } from 'lucide-react';
+import AgentParameters from './AgentParameters';
 import './ChatInput.css';
 
-const ChatInput = ({ onSendMessage, disabled, isListening, onMicClick, isAutoSpeak, onToggleAutoSpeak }) => {
+const ChatInput = ({ onSendMessage, disabled, isListening, onMicClick, isAutoSpeak, onToggleAutoSpeak, activeAgent }) => {
   const [text, setText] = useState('');
   const [attachedImage, setAttachedImage] = useState(null);
   const [attachedFile, setAttachedFile] = useState(null);
+  const [selectedParams, setSelectedParams] = useState({});
   
   const fileInputRef = useRef(null);
   const textareaRef = useRef(null);
@@ -13,10 +15,11 @@ const ChatInput = ({ onSendMessage, disabled, isListening, onMicClick, isAutoSpe
   const handleSubmit = (e) => {
     e?.preventDefault();
     if ((text.trim() || attachedImage || attachedFile) && !disabled) {
-      onSendMessage(text, attachedImage?.base64, attachedFile);
+      onSendMessage(text, attachedImage?.base64, attachedFile, selectedParams);
       setText('');
       setAttachedImage(null);
       setAttachedFile(null);
+      setSelectedParams({});
       if (fileInputRef.current) fileInputRef.current.value = '';
       if (textareaRef.current) {
         textareaRef.current.style.height = 'auto';
@@ -58,6 +61,9 @@ const ChatInput = ({ onSendMessage, disabled, isListening, onMicClick, isAutoSpe
 
   return (
     <div className="chat-input-container">
+      {(text.trim().length > 0 || attachedImage || attachedFile) && (
+        <AgentParameters activeAgent={activeAgent} onParametersChange={setSelectedParams} />
+      )}
       <div className="input-box">
         {/* Attachment Previews */}
         {attachedImage && (
