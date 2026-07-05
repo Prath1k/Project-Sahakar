@@ -43,8 +43,8 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] [Voi
 
 # Configuration
 KOKORO_API_URL = os.getenv("KOKORO_API_URL", "http://localhost:8880/v1/audio/speech")
-DEFAULT_VOICE_BLEND = "af_jessica(80)+af_sarah(20)" # Kokoro blend string or custom_blend.pt
-ANALYTICAL_VOICE = "af_sarah"
+DEFAULT_VOICE_BLEND = "af_jessica" # Universal Warm Baseline Voice (Jessica)
+ANALYTICAL_VOICE = "af_jessica"
 COACHING_VOICE = "af_jessica"
 
 
@@ -97,7 +97,7 @@ class VoiceRouter:
         persona_lower = (persona_mode or "").lower()
         text_lower = (text or "").lower()
         
-        # 1. System Alerts / Security Warnings / Errors -> Sharp Analytical Voice (sarah)
+        # 1. System Alerts / Security Warnings / Errors -> Warm Baseline Voice (jessica)
         if (
             urgency_lower in ["high", "critical", "emergency"]
             or msg_type_lower in ["alert", "error", "security", "warning", "system_alert", "violation"]
@@ -106,13 +106,13 @@ class VoiceRouter:
             elapsed = (time.perf_counter() - start_time) * 1000
             return VoiceRouteDecision(
                 assigned_voice=ANALYTICAL_VOICE,
-                profile_name="Sharp Analytical Voice (Sarah)",
-                reason=f"High urgency ({urgency}) or system alert/error detected.",
+                profile_name="Warm Baseline Voice (Jessica)",
+                reason=f"High urgency ({urgency}) or system alert/error detected (using unified Jessica voice).",
                 category="System Alerts / Security Warnings",
                 latency_ms=round(elapsed, 2)
             )
             
-        # 2. Analytical / Code Review / Devil's Advocate -> Sharp Analytical Voice (sarah)
+        # 2. Analytical / Code Review / Devil's Advocate -> Warm Baseline Voice (jessica)
         if (
             persona_lower in ["analytical", "code_review", "devils_advocate", "adversarial", "audit"]
             or role_lower in ["careerarchitect", "fiscalsentinel", "zenithcounsel", "nexusstrategist", "code_reviewer", "auditor"]
@@ -121,8 +121,8 @@ class VoiceRouter:
             elapsed = (time.perf_counter() - start_time) * 1000
             return VoiceRouteDecision(
                 assigned_voice=ANALYTICAL_VOICE,
-                profile_name="Sharp Analytical Voice (Sarah)",
-                reason=f"Analytical/Code Review/Devil's Advocate persona active ({agent_role or persona_mode}).",
+                profile_name="Warm Baseline Voice (Jessica)",
+                reason=f"Analytical/Code Review/Devil's Advocate persona active ({agent_role or persona_mode}) (using unified Jessica voice).",
                 category="Analytical / Code Review / Devil's Advocate",
                 latency_ms=round(elapsed, 2)
             )
@@ -138,17 +138,17 @@ class VoiceRouter:
             return VoiceRouteDecision(
                 assigned_voice=COACHING_VOICE,
                 profile_name="Warm Baseline Voice (Jessica)",
-                reason=f"Coaching/Encouragement/Onboarding context detected ({agent_role or msg_type_lower}).",
+                reason=f"Coaching/Encouragement/Onboarding context detected ({agent_role or msg_type_lower}) (using unified Jessica voice).",
                 category="Coaching / Encouragement / Onboarding",
                 latency_ms=round(elapsed, 2)
             )
             
-        # 4. Default / Conversational / General Assistance -> Custom 80-20 Blend
+        # 4. Default / Conversational / General Assistance -> Warm Baseline Voice (jessica)
         elapsed = (time.perf_counter() - start_time) * 1000
         return VoiceRouteDecision(
             assigned_voice=DEFAULT_VOICE_BLEND,
-            profile_name="Custom 80/20 Blend (80% Jessica + 20% Sarah)",
-            reason="Default conversational & general assistance mode.",
+            profile_name="Warm Baseline Voice (Jessica)",
+            reason="Default conversational & general assistance mode (using unified Jessica voice).",
             category="Default / Conversational / General Assistance",
             latency_ms=round(elapsed, 2)
         )
@@ -384,23 +384,9 @@ async def list_profiles_endpoint():
         "profiles": [
             {
                 "id": DEFAULT_VOICE_BLEND,
-                "name": "Custom 80/20 Blend (Jessica + Sarah)",
-                "description": "Warm conversational baseline with articulate analytical clarity.",
-                "category": "Default / Conversational / General Assistance",
-                "weight_blend": "80% af_jessica + 20% af_sarah"
-            },
-            {
-                "id": ANALYTICAL_VOICE,
-                "name": "Sharp Analytical Voice (Sarah)",
-                "description": "Articulate, authoritative, precise voice for code audits and critical alerts.",
-                "category": "Analytical / Code Review / System Alerts",
-                "weight_blend": "100% af_sarah"
-            },
-            {
-                "id": COACHING_VOICE,
                 "name": "Warm Baseline Voice (Jessica)",
-                "description": "Encouraging, supportive, empathetic voice for learning and onboarding.",
-                "category": "Coaching / Encouragement / Onboarding",
+                "description": "Warm conversational baseline voice used universally across all ATLAS agents and aspects.",
+                "category": "Universal / All Aspects",
                 "weight_blend": "100% af_jessica"
             }
         ],
