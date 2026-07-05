@@ -17,5 +17,8 @@ export default defineConfig({
       '/agent': 'http://127.0.0.1:8000',
       '/models': 'http://127.0.0.1:8000'
     }
+  },
+  build: {
+    chunkSizeWarningLimit: 2000,
   }
 })
