@@ -73,7 +73,7 @@ def execute_in_e2b(code: str, artifact_type: str, title: str) -> str:
         
     try:
         os.environ["E2B_API_KEY"] = e2b_key
-        with Sandbox() as sandbox:
+        with Sandbox.create() as sandbox:
             execution = sandbox.run_code(code)
             
             output = ""
