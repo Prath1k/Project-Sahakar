@@ -47,6 +47,7 @@ def read_root():
     return {"message": "Welcome to ATLAS API"}
 
 # Import Agent Routers
+from agents.scholar_core import router as scholar_core_router
 from agents.career_architect import router as career_architect_router
 from agents.fiscal_sentinel import router as fiscal_sentinel_router
 from agents.biometrics_pilot import router as biometrics_pilot_router
@@ -59,6 +60,7 @@ from stt_service import router as stt_router
 from auth_service import router as auth_router
 from rag_router import router as rag_router
 
+app.include_router(scholar_core_router, prefix="/api/scholar", tags=["ScholarCore"])
 app.include_router(career_architect_router, prefix="/api/career", tags=["CareerArchitect"])
 app.include_router(fiscal_sentinel_router, prefix="/api/fiscal", tags=["FiscalSentinel"])
 app.include_router(biometrics_pilot_router, prefix="/api/biometrics", tags=["BiometricsPilot"])

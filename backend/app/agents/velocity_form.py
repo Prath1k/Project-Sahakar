@@ -9,6 +9,9 @@ Key innovation: Dynamically adjusts workouts based on fatigue signals (RPE, HRV,
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from typing import Optional, List, Dict, Any
+import os
+import json
+import urllib.request
 
 router = APIRouter()
 
@@ -130,3 +133,51 @@ async def calculate_macros_endpoint(request: MacroRequest):
             "Adjust by ±100 kcal after 2 weeks based on body composition response."
         ]
     }
+
+class OverloadRequest(BaseModel):
+    rpe: float
+    load_history_json: str
+
+class AutoregRequest(BaseModel):
+    readiness_score: float
+    fatigue_indicators: str
+
+def get_groq_key_vf():
+    for i in range(1, 8):
+        k = os.environ.get(f"GROQ_API_KEY_{i}")
+        if k: return k
+    return None
+
+def execute_llm_vf(prompt: str) -> str:
+    key = get_groq_key_vf()
+    if not key:
+        raise HTTPException(status_code=500, detail="No Groq API keys configured.")
+    url = "https://api.groq.com/openai/v1/chat/completions"
+    headers = {"Authorization": f"Bearer {key}", "Content-Type": "application/json"}
+    payload = {
+        "model": "llama-3.3-70b-versatile",
+        "messages": [
+            {"role": "system", "content": "You are VelocityForm, an elite fitness and physiological optimization engineer. Wrap all structured outputs in <atlas_artifact> tags."},
+            {"role": "user", "content": prompt}
+        ],
+        "max_tokens": 1500,
+        "temperature": 0.2
+    }
+    req = urllib.request.Request(url, data=json.dumps(payload).encode('utf-8'), headers=headers, method='POST')
+    try:
+        with urllib.request.urlopen(req, timeout=15) as response:
+            res = json.loads(response.read().decode('utf-8'))
+            return res["choices"][0]["message"]["content"]
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"LLM Execution Error: {e}")
+
+@router.post("/progressive-overload")
+def progressive_overload_calculator(req: OverloadRequest):
+    prompt = f"Calculate the optimal weight/volume progression for the next workout based on current RPE ({req.rpe}/10) and load history:\n{req.load_history_json}\nWrap output in <atlas_artifact type=\"table\" title=\"Volume_Overload_Trajectory\">...</atlas_artifact>"
+    return {"result": execute_llm_vf(prompt)}
+
+@router.post("/autoregulation")
+def autoregulation_engine(req: AutoregRequest):
+    prompt = f"Evaluate current readiness score ({req.readiness_score}/100) and fatigue indicators ({req.fatigue_indicators}). Apply autoregulation principles to dynamically adjust training volume and intensity to prevent overtraining.\nWrap output in <atlas_artifact type=\"markdown\" title=\"Autoregulated_Workout_Prescription\">...</atlas_artifact>"
+    return {"result": execute_llm_vf(prompt)}
+

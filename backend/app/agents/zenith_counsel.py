@@ -9,6 +9,9 @@ Key innovation: Linguistic Sentiment Mapping + hard-coded crisis response protoc
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from typing import Optional
+import os
+import json
+import urllib.request
 
 router = APIRouter()
 
@@ -93,3 +96,57 @@ async def counsel_endpoint(request: MentalHealthRequest):
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+class DistortionRequest(BaseModel):
+    chat_history_text: str
+
+class SentimentRequest(BaseModel):
+    historical_logs: str
+
+class CBTMatrixRequest(BaseModel):
+    raw_negative_thought: str
+
+def get_groq_key_zc():
+    for i in range(1, 8):
+        k = os.environ.get(f"GROQ_API_KEY_{i}")
+        if k: return k
+    return None
+
+def execute_llm_zc(prompt: str) -> str:
+    key = get_groq_key_zc()
+    if not key:
+        raise HTTPException(status_code=500, detail="No Groq API keys configured.")
+    url = "https://api.groq.com/openai/v1/chat/completions"
+    headers = {"Authorization": f"Bearer {key}", "Content-Type": "application/json"}
+    payload = {
+        "model": "llama-3.3-70b-versatile",
+        "messages": [
+            {"role": "system", "content": "You are ZenithCounsel, an elite mental health and cognitive reframing AI. Wrap all structured outputs in <atlas_artifact> tags."},
+            {"role": "user", "content": prompt}
+        ],
+        "max_tokens": 1500,
+        "temperature": 0.2
+    }
+    req = urllib.request.Request(url, data=json.dumps(payload).encode('utf-8'), headers=headers, method='POST')
+    try:
+        with urllib.request.urlopen(req, timeout=15) as response:
+            res = json.loads(response.read().decode('utf-8'))
+            return res["choices"][0]["message"]["content"]
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"LLM Execution Error: {e}")
+
+@router.post("/cognitive-distortion")
+def cognitive_distortion_detector(req: DistortionRequest):
+    prompt = f"Analyze this chat history for cognitive distortions (all-or-nothing thinking, catastrophizing, mind reading, etc.):\n{req.chat_history_text}\nWrap output in <atlas_artifact type=\"table\" title=\"Cognitive_Distortion_Analysis\">...</atlas_artifact>"
+    return {"result": execute_llm_zc(prompt)}
+
+@router.post("/sentiment-trajectory")
+def sentiment_trajectory_plotter(req: SentimentRequest):
+    prompt = f"Analyze the emotional valence and sentiment trajectory over these historical logs:\n{req.historical_logs}\nWrap output in <atlas_artifact type=\"chart\" title=\"Sentiment_Trajectory_Map\">...</atlas_artifact>"
+    return {"result": execute_llm_zc(prompt)}
+
+@router.post("/cbt-matrix")
+def cbt_matrix_compiler(req: CBTMatrixRequest):
+    prompt = f"Compile a structured Cognitive Behavioral Therapy (CBT) thought challenge matrix for this raw negative thought: '{req.raw_negative_thought}'. Include automatic thought, distortion type, evidence for/against, and balanced reframe.\nWrap output in <atlas_artifact type=\"table\" title=\"CBT_Thought_Record_Matrix\">...</atlas_artifact>"
+    return {"result": execute_llm_zc(prompt)}
+

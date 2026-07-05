@@ -9,6 +9,9 @@ Key innovation: Spatiotemporal graph mapping + dynamic re-routing on disruption.
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from typing import Optional, List, Dict, Any
+import os
+import json
+import urllib.request
 
 router = APIRouter()
 
@@ -116,3 +119,58 @@ Include:
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+class RouteRequest(BaseModel):
+    locations_list: str
+    budget_cap: float
+
+class TemporalRequest(BaseModel):
+    calendar_json: str
+
+class BundleRequest(BaseModel):
+    itinerary_specs: str
+
+def get_groq_key_ns():
+    for i in range(1, 8):
+        k = os.environ.get(f"GROQ_API_KEY_{i}")
+        if k: return k
+    return None
+
+def execute_llm_ns(prompt: str) -> str:
+    key = get_groq_key_ns()
+    if not key:
+        raise HTTPException(status_code=500, detail="No Groq API keys configured.")
+    url = "https://api.groq.com/openai/v1/chat/completions"
+    headers = {"Authorization": f"Bearer {key}", "Content-Type": "application/json"}
+    payload = {
+        "model": "llama-3.3-70b-versatile",
+        "messages": [
+            {"role": "system", "content": "You are NexusStrategist, an elite high-density logistics optimizer and constraint scheduler. Wrap all structured outputs in <atlas_artifact> tags."},
+            {"role": "user", "content": prompt}
+        ],
+        "max_tokens": 1500,
+        "temperature": 0.2
+    }
+    req = urllib.request.Request(url, data=json.dumps(payload).encode('utf-8'), headers=headers, method='POST')
+    try:
+        with urllib.request.urlopen(req, timeout=15) as response:
+            res = json.loads(response.read().decode('utf-8'))
+            return res["choices"][0]["message"]["content"]
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"LLM Execution Error: {e}")
+
+@router.post("/route-optimizer")
+def logistic_route_optimizer(req: RouteRequest):
+    prompt = f"Optimize the travel route and sequence across these locations: {req.locations_list} under a budget cap of {req.budget_cap}. Minimize transit time and cost.\nWrap output in <atlas_artifact type=\"table\" title=\"Logistic_Route_Optimization\">...</atlas_artifact>"
+    return {"result": execute_llm_ns(prompt)}
+
+@router.post("/temporal-gap")
+def temporal_gap_analyzer(req: TemporalRequest):
+    prompt = f"Analyze this calendar schedule data for temporal gaps, inefficiencies, and fatigue bottlenecks:\n{req.calendar_json}\nWrap output in <atlas_artifact type=\"timeline\" title=\"Temporal_Gap_Analysis\">...</atlas_artifact>"
+    return {"result": execute_llm_ns(prompt)}
+
+@router.post("/itinerary-bundle")
+def itinerary_bundle_compiler(req: BundleRequest):
+    prompt = f"Compile a comprehensive itinerary bundle (accommodations, transit, dining, activities) for these specifications: {req.itinerary_specs}.\nWrap output in <atlas_artifact type=\"markdown\" title=\"Itinerary_Bundle_Compilation\">...</atlas_artifact>"
+    return {"result": execute_llm_ns(prompt)}
+
