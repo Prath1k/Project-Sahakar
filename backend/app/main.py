@@ -105,17 +105,37 @@ def auto_ingest_user_memory(user_id: str, prompt: str):
         if prompt_lower.startswith(("what ", "why ", "how ", "who ", "where ", "when ", "can you", "could you", "do you", "is there", "are there", "hello", "hi ", "hey")):
             return
             
+        # Check if user is asking to completely wipe/clear their entire memory or RAG data
+        if any(phrase in prompt_lower for phrase in ["wipe my memory", "clear my memory", "delete my memory", "wipe rag", "clear rag", "reset memory", "delete all facts", "clear all facts", "wipe all my data", "delete all my data", "clear all my data", "wipe data", "reset rag", "wipe out", "clear memory", "forget everything", "delete everything"]):
+            from scaar_engine import wipe_all_scaar_databases
+            wipe_all_scaar_databases(user_id)
+            print(f"🧠 [RAG Auto-Ingest] Executed full granular wipe for user {user_id}")
+            return
+
         # Check if user is asking to forget/delete a fact
         if any(w in prompt_lower for w in ["forget ", "delete ", "remove ", "ignore ", "don't remember", "do not remember"]):
+            from scaar_engine import VECTOR_DB_PATH, doc_collection, HAS_CHROMA
             conn = sqlite3.connect(FACT_DB_PATH)
+            conn_v = sqlite3.connect(VECTOR_DB_PATH)
             cursor = conn.cursor()
+            cursor_v = conn_v.cursor()
             words = [w for w in prompt_lower.replace("forget", "").replace("delete", "").replace("remove", "").replace("that", "").replace("my", "").replace("its", "").replace("it's", "").replace("is", "").replace("today", "").split() if len(w) > 2]
             if words:
                 for w in words:
                     cursor.execute("UPDATE atomic_facts SET is_active = 0 WHERE user_id = ? AND LOWER(fact_text) LIKE ?", (user_id, f"%{w}%"))
+                    cursor_v.execute("DELETE FROM document_vectors WHERE user_id = ? AND LOWER(chunk_text) LIKE ?", (user_id, f"%{w}%"))
+                    if HAS_CHROMA and doc_collection is not None:
+                        try:
+                            res = doc_collection.query(query_texts=[w], n_results=10, where={"user_id": user_id})
+                            if res and res.get("ids") and len(res["ids"][0]) > 0:
+                                doc_collection.delete(ids=res["ids"][0])
+                        except Exception:
+                            pass
                 conn.commit()
+                conn_v.commit()
             conn.close()
-            print(f"🧠 [RAG Auto-Ingest] Deactivated/forgot facts matching '{words}' for user {user_id}")
+            conn_v.close()
+            print(f"🧠 [RAG Auto-Ingest] Deactivated/forgot facts and vectors matching '{words}' for user {user_id}")
             return
 
         fact_keywords = ["my ", "our ", "we ", "i am", "i'm", "remember", "note that", "is ", "code is", "region", "deploy", "study", "name is", "live in", "budget", "burn rate", "using", "project", "prefer", "favorite", "created", "built"]
