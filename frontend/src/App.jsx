@@ -14,7 +14,7 @@ function App() {
   const [isArtifactOpen, setIsArtifactOpen] = useState(false);
   const [activeArtifact, setActiveArtifact] = useState(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [activeAgent, setActiveAgent] = useState({ id: null, name: '⚡ General ATLAS' });
+  const [activeAgent, setActiveAgent] = useState({ id: null, name: 'General ATLAS' });
 
   const handleSelectAgent = (agentId, agentName) => {
     setActiveAgent({ id: agentId, name: agentName });
@@ -62,7 +62,7 @@ function App() {
       <div className="app-container" style={{ position: 'relative' }}>
         <div style={{ position: 'absolute', top: '16px', right: '16px', zIndex: 100 }}>
            <button className="btn-silver btn-icon" onClick={toggleTheme} title="Toggle Theme">
-             {isDarkMode ? '☀️' : '🌙'}
+             {isDarkMode ? 'Light' : 'Dark'}
            </button>
         </div>
         <AuthPage onGuestLogin={() => setIsGuest(true)} />

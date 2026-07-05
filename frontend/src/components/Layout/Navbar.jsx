@@ -12,9 +12,9 @@ const Navbar = ({ isDarkMode, toggleTheme, toggleSidebar, activeAgent }) => {
       </div>
       
       <div className="navbar-center" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-        <img src="/logo.png" alt="Logo" className="navbar-logo" />
+        <img src="/logo.jpeg" alt="Logo" className="navbar-logo" />
         <span className="navbar-title">Project Sahakar</span>
-        {activeAgent && activeAgent.name !== '⚡ General ATLAS' && (
+        {activeAgent && activeAgent.name !== 'General ATLAS' && (
           <span style={{
             background: 'var(--primary)',
             color: '#fff',

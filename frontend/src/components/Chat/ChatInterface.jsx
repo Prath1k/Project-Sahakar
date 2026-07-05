@@ -160,7 +160,7 @@ const ChatInterface = ({ onOpenArtifact, activeAgent }) => {
           }}
           title="Toggle automatic speech synthesis for AI responses"
         >
-          <span>{isAutoSpeak ? '🔊' : '🔇'}</span>
+          <span>{isAutoSpeak ? 'Audio On' : 'Audio Off'}</span>
           <span>Auto-Speak: {isAutoSpeak ? 'ON' : 'OFF'}</span>
         </button>
       </div>
@@ -178,7 +178,7 @@ const ChatInterface = ({ onOpenArtifact, activeAgent }) => {
           <div className="message-row ai-row animate-bounce-in mt-2 mb-2">
             <div className="message-container">
               <div className="message-avatar">
-                <img src="/logo.png" alt="AI" className="ai-avatar-img" />
+                <img src="/logo.jpeg" alt="AI" className="ai-avatar-img" />
               </div>
               <div className="message-content" style={{ display: 'flex', alignItems: 'center' }}>
                 <div className="border-border h-[60px] w-[200px] overflow-hidden rounded-2xl border relative flex items-center justify-center opacity-80 shadow-lg" style={{ backgroundColor: 'var(--bubble-ai)' }}>

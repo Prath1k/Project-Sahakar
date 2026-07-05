@@ -31,7 +31,7 @@ const MessageBubble = ({ message, onOpenArtifact, onRetry, onSpeak }) => {
     <div className={`message-row ${isUser ? 'user-row' : 'ai-row'} animate-bounce-in`}>
       <div className="message-container">
         <div className="message-avatar">
-          {isUser ? <User size={20} /> : <img src="/logo.png" alt="AI" className="ai-avatar-img" />}
+          {isUser ? <User size={20} /> : <img src="/logo.jpeg" alt="AI" className="ai-avatar-img" />}
         </div>
         
         <div className="message-content">
