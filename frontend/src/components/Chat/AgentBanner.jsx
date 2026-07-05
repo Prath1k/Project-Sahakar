@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from 'react';
+import { Zap, GraduationCap, Briefcase, BarChart3, Activity, Brain, Compass } from 'lucide-react';
 
 const AGENT_CONFIGS = {
-  scholar_core:      { color: '#3ecfcf', glow: 'rgba(62,207,207,0.12)',  emoji: '🎓', desc: 'Feynman method · RAG study · Flashcards' },
-  career_architect:  { color: '#ff7a45', glow: 'rgba(255,122,69,0.12)',  emoji: '💼', desc: 'ATS optimizer · Mock interviews · Roadmaps' },
-  fiscal_sentinel:   { color: '#34d399', glow: 'rgba(52,211,153,0.12)',  emoji: '📊', desc: 'Budget · Burn-rate · Financial intelligence' },
-  velocity_form:     { color: '#f472b6', glow: 'rgba(244,114,182,0.12)', emoji: '⚡', desc: 'Adaptive training · Autoregulation · Macros' },
-  zenith_counsel:    { color: '#a78bfa', glow: 'rgba(167,139,250,0.12)', emoji: '🧘', desc: 'CBT · Emotional support · Crisis detection' },
-  nexus_strategist:  { color: '#60a5fa', glow: 'rgba(96,165,250,0.12)',  emoji: '🧭', desc: 'Itineraries · Scheduling · Logistics' },
+  scholar_core:      { icon: GraduationCap, desc: 'Feynman method · RAG study · Flashcards' },
+  career_architect:  { icon: Briefcase, desc: 'ATS optimizer · Mock interviews · Roadmaps' },
+  fiscal_sentinel:   { icon: BarChart3, desc: 'Budget · Burn-rate · Financial intelligence' },
+  velocity_form:     { icon: Activity, desc: 'Adaptive training · Autoregulation · Macros' },
+  zenith_counsel:    { icon: Brain, desc: 'CBT · Emotional support · Crisis detection' },
+  nexus_strategist:  { icon: Compass, desc: 'Itineraries · Scheduling · Logistics' },
 };
 
 const AgentBanner = ({ activeAgent }) => {
@@ -25,7 +26,7 @@ const AgentBanner = ({ activeAgent }) => {
 
   if (!activeAgent?.id || !visible) return null;
 
-  const cfg = AGENT_CONFIGS[activeAgent.id] || { color: '#7c6bff', glow: 'rgba(124,107,255,0.12)', emoji: '⚡', desc: 'Specialized agent mode' };
+  const cfg = AGENT_CONFIGS[activeAgent.id] || { icon: Zap, desc: 'Specialized agent mode' };
 
   return (
     <div
@@ -34,17 +35,19 @@ const AgentBanner = ({ activeAgent }) => {
         alignItems: 'center',
         gap: '10px',
         padding: '8px 16px',
-        background: cfg.glow,
-        borderBottom: `1px solid ${cfg.color}33`,
+        background: 'var(--bg-surface)',
+        borderBottom: `1px solid var(--border-color)`,
         animation: 'slideUp 0.25s ease-out forwards',
       }}
     >
-      <span style={{ fontSize: '1.1rem' }}>{cfg.emoji}</span>
+      <div style={{ color: 'var(--text-main)', display: 'flex', alignItems: 'center' }}>
+        <cfg.icon size={20} />
+      </div>
       <div style={{ flex: 1 }}>
         <span style={{
           fontSize: '0.8rem',
           fontWeight: 700,
-          color: cfg.color,
+          color: 'var(--text-main)',
           letterSpacing: '0.02em',
         }}>
           {displayed?.name?.replace(/^[^\w]*/, '').trim()}
@@ -58,10 +61,8 @@ const AgentBanner = ({ activeAgent }) => {
         </span>
       </div>
       <div style={{
-        width: 7, height: 7, borderRadius: '50%',
-        background: cfg.color,
-        boxShadow: `0 0 6px ${cfg.color}`,
-        animation: 'pulse-skeleton 2s ease-in-out infinite',
+        width: 7, height: 7,
+        background: 'var(--text-main)',
       }} />
     </div>
   );

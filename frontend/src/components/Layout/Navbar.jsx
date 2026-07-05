@@ -14,18 +14,14 @@ const Navbar = ({ isDarkMode, toggleTheme, toggleSidebar, activeAgent }) => {
       <div className="navbar-center" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
         <img src="/logo.jpeg" alt="Logo" className="navbar-logo" />
         <span className="navbar-title">Project Sahakar</span>
-        {activeAgent && activeAgent.name !== 'General ATLAS' && (
+        {activeAgent && activeAgent.name !== 'General' && (
           <span style={{
-            background: 'var(--primary)',
-            color: '#fff',
-            padding: '2px 10px',
-            borderRadius: '12px',
-            fontSize: '0.75rem',
-            fontWeight: '600',
-            letterSpacing: '0.3px',
-            boxShadow: '0 2px 6px rgba(0,0,0,0.15)'
+            fontSize: '0.78rem',
+            fontWeight: 500,
+            color: 'var(--text-muted)',
+            marginLeft: '4px',
           }}>
-            {activeAgent.name}
+            / {activeAgent.name}
           </span>
         )}
       </div>

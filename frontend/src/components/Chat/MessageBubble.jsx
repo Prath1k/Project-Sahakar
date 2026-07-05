@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { User, LayoutPanelLeft, Copy, Check, ThumbsUp, ThumbsDown, RefreshCw, Volume2, Sparkles } from 'lucide-react';
+import { User, LayoutPanelLeft, Copy, Check, ThumbsUp, ThumbsDown, RefreshCw, Volume2, Sparkles, FileText } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
@@ -85,7 +85,7 @@ const MessageBubble = ({ message, onOpenArtifact, onRetry, onSpeak }) => {
               {/* Uploaded File (PDF / Doc) Badge */}
               {message.attachedFile && (
                 <div className="attached-file-badge">
-                  <span className="file-icon">📄</span>
+                  <span className="file-icon" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}><FileText size={16} /></span>
                   <div className="file-details">
                     <span className="file-name">{message.attachedFile.name}</span>
                     <span className="file-meta">Ingested into RAG Document Ocean</span>

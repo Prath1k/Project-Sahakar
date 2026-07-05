@@ -3,36 +3,32 @@ import MessageBubble from './MessageBubble';
 import ChatInput from '../Input/ChatInput';
 import AgentBanner from './AgentBanner';
 import { useVoiceHandoff } from '../../hooks/useVoiceHandoff';
-import { GlyphMatrix } from "@/components/ui/glyph-matrix";
-import { API_BASE_URL } from "@/lib/config";
-import { Volume2, VolumeX, Trash2, RotateCcw } from 'lucide-react';
+const API_BASE_URL = 'http://localhost:5001';
+import { Volume2, VolumeX, RotateCcw } from 'lucide-react';
 import './ChatInterface.css';
 
 const DEFAULT_WELCOME = {
   id: 1,
-  text: "# Welcome to ATLAS & Project Sahakar 🌟\n\nI am your autonomous **multi-agent task and learning assistant**. How can I help you today?\n\n### What I can do:\n* **🎓 ScholarCore**: Study with Feynman technique & RAG textbook memory\n* **💼 CareerArchitect**: Optimize ATS resumes & generate career roadmaps\n* **📊 FiscalSentinel**: Analyze budgets, burn rates & financial intelligence\n* **⚡ VelocityForm**: Adaptive training & macronutrient autoregulation\n* **🧘 ZenithCounsel**: CBT cognitive health & emotional support\n* **🧭 NexusStrategist**: Complex logistics, itineraries & scheduling\n* **🎨 ImageGen**: Create stunning AI images using FLUX\n* **📄 RAG Memory**: Upload PDFs to pinpoint answers down to the exact page & chunk!",
+  text: "Hello! I am your autonomous task and learning assistant. How can I help you today?",
   sender: 'ai',
-  modelInfo: 'ATLAS Multi-Agent Framework'
+  modelInfo: 'ATLAS'
 };
 
-const ChatInterface = ({ onOpenArtifact, activeAgent, loadedMessages }) => {
+const ChatInterface = ({ onOpenArtifact, activeAgent, loadedMessages, selectedModel }) => {
   const [messages, setMessages] = useState(() => loadedMessages || [DEFAULT_WELCOME]);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [isVoiceMode, setIsVoiceMode] = useState(false);
   const [isAutoSpeak, setIsAutoSpeak] = useState(false);
   const [currentSessionTitle, setCurrentSessionTitle] = useState('New Conversation');
   const messagesEndRef = useRef(null);
   
   const { isListening, stopListening, stopCurrentSpeech, speakAtlasResponse, startEightSecondListeningLoop } = useVoiceHandoff();
 
-  // Load messages from sidebar history click
   useEffect(() => {
     if (loadedMessages && loadedMessages.length > 0) {
       setMessages(loadedMessages);
     }
   }, [loadedMessages]);
 
-  // Save session to localStorage when messages change
   useEffect(() => {
     if (messages.length > 1) {
       saveToHistory(messages);
@@ -44,7 +40,6 @@ const ChatInterface = ({ onOpenArtifact, activeAgent, loadedMessages }) => {
       const raw = localStorage.getItem('atlas_chat_history');
       let history = raw ? JSON.parse(raw) : [];
       
-      // Derive a title from the first user message
       const firstUserMsg = msgs.find(m => m.sender === 'user');
       const title = firstUserMsg ? firstUserMsg.text.slice(0, 42) + (firstUserMsg.text.length > 42 ? '...' : '') : 'Conversation';
       setCurrentSessionTitle(title);
@@ -57,7 +52,6 @@ const ChatInterface = ({ onOpenArtifact, activeAgent, loadedMessages }) => {
         messages: msgs
       };
 
-      // Update existing or prepend new
       const index = history.findIndex(h => h.id === sessionObj.id);
       if (index >= 0) {
         history[index] = sessionObj;
@@ -72,18 +66,13 @@ const ChatInterface = ({ onOpenArtifact, activeAgent, loadedMessages }) => {
   };
 
   const handleToggleVoiceMode = () => {
-    setIsVoiceMode(prev => {
-      const newState = !prev;
-      if (newState) {
-        startEightSecondListeningLoop((transcribedText) => {
-          handleSendMessage(transcribedText, 'Auto');
-          setIsVoiceMode(false);
-        });
-      } else {
-        stopListening();
-      }
-      return newState;
-    });
+    if (isListening) {
+      stopListening();
+    } else {
+      startEightSecondListeningLoop((transcribedText) => {
+        handleSendMessage(transcribedText, selectedModel || 'Auto');
+      });
+    }
   };
 
   const scrollToBottom = () => {
@@ -114,7 +103,8 @@ const ChatInterface = ({ onOpenArtifact, activeAgent, loadedMessages }) => {
     }
   };
 
-  const handleSendMessage = async (text, model = 'Auto', imageBase64 = null, attachedFile = null) => {
+  const handleSendMessage = async (text, model = null, imageBase64 = null, attachedFile = null) => {
+    const effectiveModel = model || selectedModel || 'Auto';
     if (!text.trim() && !imageBase64 && !attachedFile) return;
     stopCurrentSpeech();
 
@@ -131,7 +121,6 @@ const ChatInterface = ({ onOpenArtifact, activeAgent, loadedMessages }) => {
     setIsGenerating(true);
 
     try {
-      // 1. Handle PDF / Document Ingestion to RAG
       if (attachedFile) {
         if (attachedFile.type === 'application/pdf' || attachedFile.name.endsWith('.pdf')) {
           const formData = new FormData();
@@ -148,9 +137,9 @@ const ChatInterface = ({ onOpenArtifact, activeAgent, loadedMessages }) => {
             const ingestData = await ingestRes.json();
             const ragSuccessMsg = {
               id: Date.now() + 1,
-              text: `### 📄 Document Successfully Ingested into RAG!\n* **File**: \`${ingestData.document}\`\n* **Pages Parsed**: ${ingestData.total_pages}\n* **Semantic Chunks Indexed**: ${ingestData.total_chunks_indexed}\n\n${ingestData.message}\n\n*You can now ask me any question about this document and I will pinpoint the exact page and section!*`,
+              text: `### Document Ingested\n* **File**: \`${ingestData.document}\`\n* **Pages**: ${ingestData.total_pages}\n* **Chunks Indexed**: ${ingestData.total_chunks_indexed}\n\n${ingestData.message}\n\n*You can now ask questions about this document.*`,
               sender: 'ai',
-              modelInfo: 'SCAAR RAG Document Ocean'
+              modelInfo: 'RAG'
             };
             setMessages(prev => [...prev, ragSuccessMsg]);
             setIsGenerating(false);
@@ -159,23 +148,22 @@ const ChatInterface = ({ onOpenArtifact, activeAgent, loadedMessages }) => {
         }
       }
 
-      // 2. Handle Image Generation (FLUX AI via Pollinations)
-      if (model === 'ImageGen') {
+      if (effectiveModel === 'ImageGen') {
         const res = await fetch(`${API_BASE_URL}/api/image-gen/generate`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ prompt: text || "A beautiful cyberpunk city at sunset, 8k resolution", style: "vivid", model: "flux" })
+          body: JSON.stringify({ prompt: text || "A beautiful landscape", style: "vivid", model: "flux" })
         });
 
         const data = await res.json();
         if (data.success || data.image_url) {
           const newAiMsg = {
             id: Date.now() + 1,
-            text: `### 🎨 Image Generated Successfully!\n**Prompt**: *${data.enriched_prompt || text}*\n\nHere is your custom masterpiece generated using **FLUX AI**:`,
+            text: `### Image Generated\n**Prompt**: *${data.enriched_prompt || text}*`,
             sender: 'ai',
             imageUrl: data.image_url,
             isGeneratedImage: true,
-            modelInfo: 'FLUX AI (Pollinations.ai)'
+            modelInfo: 'FLUX AI'
           };
           setMessages(prev => [...prev, newAiMsg]);
           setIsGenerating(false);
@@ -185,7 +173,6 @@ const ChatInterface = ({ onOpenArtifact, activeAgent, loadedMessages }) => {
         }
       }
 
-      // 3. Normal Chat / Agent Routing
       const endpoint = activeAgent && activeAgent.id ? '/api/agent/chat' : '/api/chat';
       const bodyPayload = activeAgent && activeAgent.id ? {
         agent_id: activeAgent.id,
@@ -196,7 +183,7 @@ const ChatInterface = ({ onOpenArtifact, activeAgent, loadedMessages }) => {
         prompt: text || "Please analyze this image.",
         has_image: !!imageBase64,
         image_base64: imageBase64,
-        override_model: model !== 'Auto' ? model : null
+        override_model: effectiveModel !== 'Auto' ? effectiveModel : null
       };
 
       const res = await fetch(`${API_BASE_URL}${endpoint}`, {
@@ -210,7 +197,6 @@ const ChatInterface = ({ onOpenArtifact, activeAgent, loadedMessages }) => {
       
       let responseText = data.response || "No response received from model.";
       
-      // Extract XML Artifacts if present
       const artifactMatch = responseText.match(/<atlas_artifact[^>]*>([\s\S]*?)<\/atlas_artifact>/i);
       let artifactContent = null;
       if (artifactMatch) {
@@ -222,7 +208,7 @@ const ChatInterface = ({ onOpenArtifact, activeAgent, loadedMessages }) => {
         id: Date.now() + 1, 
         text: responseText, 
         sender: 'ai',
-        modelInfo: data.model_used || data.provider || model,
+        modelInfo: data.model_used || data.provider || effectiveModel,
         hasArtifact: !!artifactContent
       };
       
@@ -230,10 +216,10 @@ const ChatInterface = ({ onOpenArtifact, activeAgent, loadedMessages }) => {
       setIsGenerating(false);
 
       if (artifactContent && onOpenArtifact) {
-        onOpenArtifact({ title: `${activeAgent?.name || 'ATLAS'} Plan & Roadmap`, content: artifactContent });
+        onOpenArtifact({ title: `${activeAgent?.name || 'General'} Plan`, content: artifactContent });
       }
 
-      if (isVoiceMode || isAutoSpeak) {
+      if (isAutoSpeak) {
         speakAtlasResponse(responseText);
       }
 
@@ -241,9 +227,9 @@ const ChatInterface = ({ onOpenArtifact, activeAgent, loadedMessages }) => {
       console.error("Chat Error:", error);
       setMessages(prev => [...prev, { 
         id: Date.now() + 1, 
-        text: '⚠️ **Connection Error**: Could not reach the ATLAS backend. Please check if the Hugging Face Space is active or running locally on port 7860.', 
+        text: 'Connection Error: Could not reach the backend. Please check if the server is running.', 
         sender: 'ai',
-        modelInfo: 'System Error'
+        modelInfo: 'System'
       }]);
       setIsGenerating(false);
     }
@@ -251,37 +237,7 @@ const ChatInterface = ({ onOpenArtifact, activeAgent, loadedMessages }) => {
 
   return (
     <div className="chat-interface">
-      {/* Active Agent Banner */}
       <AgentBanner activeAgent={activeAgent} />
-
-      {/* Top Bar / Controls */}
-      <div className="chat-topbar">
-        <div className="session-info">
-          <span className="session-label">{currentSessionTitle}</span>
-          <span className="msg-count">{messages.length - 1} messages</span>
-        </div>
-
-        <div className="topbar-actions">
-          <button 
-            onClick={() => setIsAutoSpeak(!isAutoSpeak)}
-            className={`topbar-btn ${isAutoSpeak ? 'auto-speak-active' : ''}`}
-            title="Toggle automatic voice narration of AI replies"
-          >
-            {isAutoSpeak ? <Volume2 size={15} /> : <VolumeX size={15} />}
-            <span>Auto-Speak: {isAutoSpeak ? 'ON' : 'OFF'}</span>
-          </button>
-
-          <button 
-            onClick={handleClearChat}
-            className="topbar-btn btn-clear"
-            title="Clear chat and start fresh"
-          >
-            <RotateCcw size={14} />
-            <span>Reset Chat</span>
-          </button>
-        </div>
-      </div>
-      </div>
 
       {/* Messages Area */}
       <div className="chat-messages">
@@ -289,14 +245,14 @@ const ChatInterface = ({ onOpenArtifact, activeAgent, loadedMessages }) => {
           <MessageBubble 
             key={msg.id} 
             message={msg} 
-            onOpenArtifact={() => msg.hasArtifact && onOpenArtifact({ title: 'Generated Plan & Roadmap', content: '# Sample Plan' })}
+            onOpenArtifact={() => msg.hasArtifact && onOpenArtifact({ title: 'Generated Plan', content: '# Plan' })}
             onRetry={handleRetry}
             onSpeak={(text) => speakAtlasResponse(text)}
           />
         ))}
 
         {isGenerating && (
-          <div className="message-row ai-row animate-bounce-in mt-2 mb-2">
+          <div className="message-row ai-row">
             <div className="message-container">
               <div className="message-avatar">
                 <div className="ai-avatar-circle">
@@ -305,10 +261,8 @@ const ChatInterface = ({ onOpenArtifact, activeAgent, loadedMessages }) => {
               </div>
               <div className="message-content" style={{ display: 'flex', alignItems: 'center' }}>
                 <div className="generating-card">
-                  <GlyphMatrix color="rgba(124, 107, 255, 0.5)" />
                   <div className="generating-text">
-                    <div className="skeleton-pulse" />
-                    <span>Synthesizing intelligent response...</span>
+                    <span>Generating...</span>
                   </div>
                 </div>
               </div>
@@ -321,9 +275,9 @@ const ChatInterface = ({ onOpenArtifact, activeAgent, loadedMessages }) => {
       {/* Input Area */}
       <div className="chat-input-wrapper">
         <ChatInput 
-          onSendMessage={handleSendMessage} 
+          onSendMessage={(text, imageBase64, attachedFile) => handleSendMessage(text, null, imageBase64, attachedFile)} 
           disabled={isGenerating} 
-          isListening={isVoiceMode}
+          isListening={isListening}
           onMicClick={handleToggleVoiceMode}
         />
       </div>

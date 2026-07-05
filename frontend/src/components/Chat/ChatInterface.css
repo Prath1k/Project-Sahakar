@@ -53,7 +53,6 @@
   align-items: center;
   gap: 6px;
   padding: 5px 12px;
-  border-radius: 14px;
   font-size: 0.78rem;
   font-weight: 600;
   border: 1px solid var(--border-color);
@@ -71,10 +70,8 @@
 }
 
 .auto-speak-active {
-  background: rgba(124, 107, 255, 0.15) !important;
-  border-color: rgba(124, 107, 255, 0.4) !important;
-  color: #a093ff !important;
-  box-shadow: 0 0 12px rgba(124, 107, 255, 0.2);
+  background: var(--text-main) !important;
+  color: var(--bg-main) !important;
 }
 
 .btn-clear:hover {
@@ -98,14 +95,12 @@
   position: relative;
   width: 260px;
   height: 64px;
-  border-radius: 16px;
-  border: 1px solid rgba(124, 107, 255, 0.3);
-  background: #111116;
+  border: 1px solid var(--border-color);
+  background: var(--bg-surface);
   overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5), 0 0 16px rgba(124, 107, 255, 0.15);
 }
 
 .generating-text {
@@ -116,14 +111,13 @@
   gap: 8px;
   font-size: 0.82rem;
   font-weight: 600;
-  color: #a093ff;
-  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9);
+  color: var(--text-main);
 }
 
 /* Input Wrapper */
 .chat-input-wrapper {
   flex-shrink: 0;
-  background: linear-gradient(180deg, transparent 0%, var(--bg-main) 30%);
+  background: var(--bg-main);
   padding-top: 10px;
   z-index: 20;
 }

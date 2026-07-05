@@ -7,69 +7,68 @@
 
 /* ===== PREMIUM DARK DESIGN SYSTEM ===== */
 :root {
-  /* Deep charcoal dark theme (default) */
-  --bg-main: #0f0f11;
-  --bg-surface: #151518;
-  --bg-elevated: #1c1c20;
-  --bg-glass: rgba(255,255,255,0.04);
-  --bg-glass-hover: rgba(255,255,255,0.07);
-  --text-main: #f0f0f2;
-  --text-muted: #8a8a9a;
-  --text-dim: #555566;
-  --border-color: rgba(255,255,255,0.08);
-  --border-strong: rgba(255,255,255,0.14);
-  --bubble-user: #1e1e24;
-  --bubble-ai: #0f0f11;
-  --primary: #7c6bff;
-  --primary-glow: rgba(124, 107, 255, 0.15);
-  --primary-border: rgba(124, 107, 255, 0.4);
-  --primary-light: rgba(124, 107, 255, 0.12);
-  --secondary: #3ecfcf;
-  --secondary-glow: rgba(62, 207, 207, 0.1);
-  --accent-orange: #ff7a45;
-  --accent-green: #34d399;
-  --accent-rose: #f472b6;
-  --destructive: #ff5555;
-  --shadow-sm: 0 1px 3px rgba(0,0,0,0.4);
-  --shadow-md: 0 4px 16px rgba(0,0,0,0.5);
-  --shadow-lg: 0 8px 32px rgba(0,0,0,0.6);
-  --shadow-primary: 0 0 20px rgba(124,107,255,0.2);
-  --radius: 12px;
-  --radius-sm: 8px;
-  --radius-lg: 16px;
+  --bg-main: #000000;
+  --bg-surface: #0a0a0a;
+  --bg-elevated: #111111;
+  --bg-glass: #111111;
+  --bg-glass-hover: #1a1a1a;
+  --text-main: #ffffff;
+  --text-muted: #a0a0a0;
+  --text-dim: #666666;
+  --border-color: #333333;
+  --border-strong: #555555;
+  --bubble-user: #1a1a1a;
+  --bubble-ai: #000000;
+  --primary: #ffffff;
+  --primary-glow: transparent;
+  --primary-border: #ffffff;
+  --primary-light: #222222;
+  --secondary: #ffffff;
+  --secondary-glow: transparent;
+  --accent-orange: #ffffff;
+  --accent-green: #ffffff;
+  --accent-rose: #ffffff;
+  --destructive: #ffffff;
+  --shadow-sm: none;
+  --shadow-md: none;
+  --shadow-lg: none;
+  --shadow-primary: none;
+  --radius: 0px;
+  --radius-sm: 0px;
+  --radius-lg: 0px;
 
-  /* Silver Shine Buttons */
-  --btn-silver-bg: rgba(255,255,255,0.06);
-  --btn-silver-border: rgba(255,255,255,0.1);
-  --btn-silver-hover: rgba(255,255,255,0.1);
-  --btn-silver-border-hover: rgba(255,255,255,0.2);
+  /* Simple Buttons */
+  --btn-silver-bg: #111111;
+  --btn-silver-border: #333333;
+  --btn-silver-hover: #222222;
+  --btn-silver-border-hover: #ffffff;
 }
 
 .light-mode {
-  --bg-main: #fafafa;
-  --bg-surface: #f4f4f6;
-  --bg-elevated: #ffffff;
-  --bg-glass: rgba(0,0,0,0.03);
-  --bg-glass-hover: rgba(0,0,0,0.06);
-  --text-main: #111118;
-  --text-muted: #666677;
-  --text-dim: #aaaabc;
-  --border-color: rgba(0,0,0,0.08);
-  --border-strong: rgba(0,0,0,0.15);
-  --bubble-user: #f0f0f6;
+  --bg-main: #ffffff;
+  --bg-surface: #f5f5f5;
+  --bg-elevated: #eeeeee;
+  --bg-glass: #eeeeee;
+  --bg-glass-hover: #dddddd;
+  --text-main: #000000;
+  --text-muted: #666666;
+  --text-dim: #999999;
+  --border-color: #cccccc;
+  --border-strong: #999999;
+  --bubble-user: #f0f0f0;
   --bubble-ai: #ffffff;
-  --primary: #6b58f0;
-  --primary-glow: rgba(107, 88, 240, 0.12);
-  --primary-border: rgba(107, 88, 240, 0.3);
-  --primary-light: rgba(107, 88, 240, 0.08);
-  --shadow-sm: 0 1px 3px rgba(0,0,0,0.06);
-  --shadow-md: 0 4px 12px rgba(0,0,0,0.1);
-  --shadow-lg: 0 8px 24px rgba(0,0,0,0.14);
-  --shadow-primary: 0 0 16px rgba(107,88,240,0.15);
-  --btn-silver-bg: rgba(0,0,0,0.04);
-  --btn-silver-border: rgba(0,0,0,0.1);
-  --btn-silver-hover: rgba(0,0,0,0.07);
-  --btn-silver-border-hover: rgba(0,0,0,0.18);
+  --primary: #000000;
+  --primary-glow: transparent;
+  --primary-border: #000000;
+  --primary-light: #dddddd;
+  --shadow-sm: none;
+  --shadow-md: none;
+  --shadow-lg: none;
+  --shadow-primary: none;
+  --btn-silver-bg: #f5f5f5;
+  --btn-silver-border: #cccccc;
+  --btn-silver-hover: #eeeeee;
+  --btn-silver-border-hover: #000000;
 }
 
 * {

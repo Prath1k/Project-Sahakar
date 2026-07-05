@@ -1,87 +1,44 @@
 import React, { useState, useEffect } from 'react';
-import { X, MessageSquare, Plus, LogOut, User, Trash2, ChevronRight, Zap, Clock } from 'lucide-react';
+import { X, MessageSquare, Plus, LogOut, User, Trash2, ChevronDown, ChevronUp, Download } from 'lucide-react';
 import { supabase } from '../../lib/supabaseClient';
 import './Sidebar.css';
 
-// All 7 ATLAS Intelligent Agents
 const AGENTS = [
-  {
-    id: null,
-    name: 'General ATLAS',
-    subtitle: 'Auto-Routing Engine',
-    emoji: '⚡',
-    color: '#7c6bff',
-    glow: 'rgba(124,107,255,0.2)',
-    description: 'Intelligent multi-model routing'
-  },
-  {
-    id: 'scholar_core',
-    name: 'ScholarCore',
-    subtitle: 'Academic Intelligence',
-    emoji: '🎓',
-    color: '#3ecfcf',
-    glow: 'rgba(62,207,207,0.2)',
-    description: 'Feynman technique, flashcards, RAG study'
-  },
-  {
-    id: 'career_architect',
-    name: 'CareerArchitect',
-    subtitle: 'Career Optimization',
-    emoji: '💼',
-    color: '#ff7a45',
-    glow: 'rgba(255,122,69,0.2)',
-    description: 'ATS resumes, mock interviews, roadmaps'
-  },
-  {
-    id: 'fiscal_sentinel',
-    name: 'FiscalSentinel',
-    subtitle: 'Financial Intelligence',
-    emoji: '📊',
-    color: '#34d399',
-    glow: 'rgba(52,211,153,0.2)',
-    description: 'Budget tracking, burn-rate analysis'
-  },
-  {
-    id: 'velocity_form',
-    name: 'VelocityForm',
-    subtitle: 'Fitness & Physiology',
-    emoji: '⚡',
-    color: '#f472b6',
-    glow: 'rgba(244,114,182,0.2)',
-    description: 'Adaptive training, macro calculator'
-  },
-  {
-    id: 'zenith_counsel',
-    name: 'ZenithCounsel',
-    subtitle: 'Cognitive Health',
-    emoji: '🧘',
-    color: '#a78bfa',
-    glow: 'rgba(167,139,250,0.2)',
-    description: 'CBT frameworks, emotional support'
-  },
-  {
-    id: 'nexus_strategist',
-    name: 'NexusStrategist',
-    subtitle: 'Logistics & Planning',
-    emoji: '🧭',
-    color: '#60a5fa',
-    glow: 'rgba(96,165,250,0.2)',
-    description: 'Itineraries, schedules, constraint planning'
-  },
+  { id: null,               name: 'General',   subtitle: 'Auto-Routing' },
+  { id: 'scholar_core',     name: 'Scholar',   subtitle: 'Academic Intelligence' },
+  { id: 'career_architect', name: 'Career',    subtitle: 'Career Optimization' },
+  { id: 'fiscal_sentinel',  name: 'Finance',   subtitle: 'Financial Intelligence' },
+  { id: 'velocity_form',    name: 'Fitness',   subtitle: 'Fitness & Physiology' },
+  { id: 'zenith_counsel',   name: 'Wellness',  subtitle: 'Cognitive Health' },
+  { id: 'nexus_strategist', name: 'Planner',   subtitle: 'Logistics & Planning' },
 ];
 
-const Sidebar = ({ isOpen, onClose, userEmail, onSignOut, activeAgent, onSelectAgent, onNewChat }) => {
-  const [chatHistory, setChatHistory] = useState([]);
-  const [hoveredAgent, setHoveredAgent] = useState(null);
+const MODELS = [
+  { id: 'Auto',       name: 'Auto (Intelligent Routing)' },
+  { id: 'Groq',       name: 'Groq (Llama 3.3 70B)' },
+  { id: 'SambaNova',  name: 'DeepSeek-R1 (SambaNova)' },
+  { id: 'Maverick',   name: 'Llama-4-Maverick (128K)' },
+  { id: 'Cerebras',   name: 'Cerebras (Llama 3.3)' },
+  { id: 'Gemini',     name: 'Gemini 1.5 Pro' },
+  { id: 'Nvidia',     name: 'NVIDIA NIM Vision' },
+  { id: 'OpenRouter', name: 'OpenRouter Free (Gemma)' },
+  { id: 'ImageGen',   name: 'ImageGen (FLUX AI)' },
+];
 
+const Sidebar = ({ isOpen, onClose, userEmail, onSignOut, activeAgent, onSelectAgent, onNewChat, selectedModel, onSelectModel }) => {
+  const [chatHistory, setChatHistory] = useState([]);
+  const [isModelsOpen, setIsModelsOpen] = useState(false);
+
+  // Reload history every time sidebar opens
   useEffect(() => {
-    loadHistory();
-  }, []);
+    if (isOpen) loadHistory();
+  }, [isOpen]);
 
   const loadHistory = () => {
     try {
       const raw = localStorage.getItem('atlas_chat_history');
-      if (raw) setChatHistory(JSON.parse(raw).slice(0, 15));
+      if (raw) setChatHistory(JSON.parse(raw).slice(0, 20));
+      else setChatHistory([]);
     } catch (e) {
       setChatHistory([]);
     }
@@ -101,9 +58,54 @@ const Sidebar = ({ isOpen, onClose, userEmail, onSignOut, activeAgent, onSelectA
   const handleSelectHistory = (session) => {
     if (onSelectAgent) {
       const agent = AGENTS.find(a => a.id === session.agentId);
-      onSelectAgent(session.agentId, agent ? `${agent.emoji} ${agent.name}` : '⚡ General ATLAS', session.messages);
+      onSelectAgent(session.agentId, agent ? agent.name : 'General', session.messages);
     }
     onClose();
+  };
+
+  const handleDeleteSession = (e, sessionId) => {
+    e.stopPropagation();
+    try {
+      const raw = localStorage.getItem('atlas_chat_history');
+      if (raw) {
+        const history = JSON.parse(raw).filter(h => h.id !== sessionId);
+        localStorage.setItem('atlas_chat_history', JSON.stringify(history));
+        setChatHistory(history.slice(0, 20));
+      }
+    } catch (err) {
+      console.error('Failed to delete session:', err);
+    }
+  };
+
+  const handleExportTxt = () => {
+    const raw = localStorage.getItem('atlas_chat_history');
+    if (!raw) return;
+    const history = JSON.parse(raw);
+    let text = '';
+    history.forEach(session => {
+      text += `=== ${session.title} (${new Date(session.timestamp).toLocaleString()}) ===\n\n`;
+      (session.messages || []).forEach(msg => {
+        text += `[${msg.sender === 'user' ? 'You' : 'AI'}]: ${msg.text}\n\n`;
+      });
+      text += '\n---\n\n';
+    });
+    downloadFile(text, 'chat-history.txt', 'text/plain');
+  };
+
+  const handleExportJson = () => {
+    const raw = localStorage.getItem('atlas_chat_history');
+    if (!raw) return;
+    downloadFile(raw, 'chat-history.json', 'application/json');
+  };
+
+  const downloadFile = (content, filename, type) => {
+    const blob = new Blob([content], { type });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   const formatTime = (ts) => {
@@ -122,8 +124,7 @@ const Sidebar = ({ isOpen, onClose, userEmail, onSignOut, activeAgent, onSelectA
         {/* Header */}
         <div className="sidebar-header">
           <div className="sidebar-logo">
-            <div className="logo-orb" />
-            <span className="sidebar-title">ATLAS</span>
+            <span className="sidebar-title">Menu</span>
           </div>
           <button className="sidebar-close-btn" onClick={onClose}>
             <X size={16} />
@@ -131,7 +132,7 @@ const Sidebar = ({ isOpen, onClose, userEmail, onSignOut, activeAgent, onSelectA
         </div>
 
         <div className="sidebar-content">
-          {/* New Chat Button */}
+          {/* New Chat */}
           <button
             className="new-chat-btn"
             onClick={() => {
@@ -143,13 +144,11 @@ const Sidebar = ({ isOpen, onClose, userEmail, onSignOut, activeAgent, onSelectA
             <span>New Chat</span>
           </button>
 
-          {/* Agents Section */}
+          {/* Agents */}
           <div className="sidebar-section">
             <div className="section-header">
-              <Zap size={12} className="section-icon" />
-              <span className="section-title">Intelligent Agents</span>
+              <span className="section-title">AGENTS</span>
             </div>
-
             <div className="agents-list">
               {AGENTS.map((agent) => {
                 const isActive = activeAgent?.id === agent.id;
@@ -158,23 +157,13 @@ const Sidebar = ({ isOpen, onClose, userEmail, onSignOut, activeAgent, onSelectA
                     key={agent.id ?? 'general'}
                     className={`agent-card ${isActive ? 'active' : ''}`}
                     onClick={() => {
-                      if (onSelectAgent) onSelectAgent(agent.id, `${agent.emoji} ${agent.name}`);
+                      if (onSelectAgent) onSelectAgent(agent.id, agent.name);
                       onClose();
                     }}
-                    onMouseEnter={() => setHoveredAgent(agent.id ?? 'general')}
-                    onMouseLeave={() => setHoveredAgent(null)}
-                    style={isActive ? { '--agent-color': agent.color, '--agent-glow': agent.glow } : {}}
                   >
-                    <div className="agent-emoji-wrap" style={{ background: isActive ? agent.glow : 'var(--bg-glass)' }}>
-                      <span className="agent-emoji">{agent.emoji}</span>
-                    </div>
                     <div className="agent-info">
                       <span className="agent-name">{agent.name}</span>
                       <span className="agent-subtitle">{agent.subtitle}</span>
-                    </div>
-                    <div className="agent-right">
-                      {isActive && <div className="active-dot" style={{ background: agent.color }} />}
-                      <ChevronRight size={13} className="agent-arrow" />
                     </div>
                   </button>
                 );
@@ -182,28 +171,44 @@ const Sidebar = ({ isOpen, onClose, userEmail, onSignOut, activeAgent, onSelectA
             </div>
           </div>
 
-          {/* Chat History Section */}
-          <div className="sidebar-section" style={{ marginTop: '8px' }}>
+          {/* Models Dropdown */}
+          <div className="sidebar-section">
+            <button className="section-header section-toggle" onClick={() => setIsModelsOpen(!isModelsOpen)}>
+              <span className="section-title">MODELS</span>
+              {isModelsOpen ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+            </button>
+            {isModelsOpen && (
+              <div className="agents-list">
+                {MODELS.map((m) => (
+                  <button
+                    key={m.id}
+                    className={`agent-card ${selectedModel === m.id ? 'active' : ''}`}
+                    onClick={() => onSelectModel && onSelectModel(m.id)}
+                  >
+                    <div className="agent-info">
+                      <span className="agent-name">{m.name}</span>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Chat History */}
+          <div className="sidebar-section">
             <div className="section-header">
-              <Clock size={12} className="section-icon" />
-              <span className="section-title">Recent Chats</span>
+              <span className="section-title">RECENT</span>
               {chatHistory.length > 0 && (
-                <button className="clear-history-btn" onClick={handleClearHistory} title="Clear history">
+                <button className="clear-history-btn" onClick={handleClearHistory} title="Clear all">
                   <Trash2 size={11} />
                 </button>
               )}
             </div>
-
-            {chatHistory.length === 0 ? (
-              <div className="empty-history">
-                <MessageSquare size={18} style={{ opacity: 0.3 }} />
-                <span>No chats yet</span>
-              </div>
-            ) : (
+            {chatHistory.length > 0 && (
               <div className="history-list">
                 {chatHistory.map((session, i) => (
                   <button
-                    key={i}
+                    key={session.id || i}
                     className="history-item"
                     onClick={() => handleSelectHistory(session)}
                     title={session.title}
@@ -213,11 +218,37 @@ const Sidebar = ({ isOpen, onClose, userEmail, onSignOut, activeAgent, onSelectA
                       <span className="history-title">{session.title}</span>
                       <span className="history-time">{formatTime(session.timestamp)}</span>
                     </div>
+                    <button
+                      className="clear-history-btn"
+                      onClick={(e) => handleDeleteSession(e, session.id)}
+                      title="Delete this chat"
+                    >
+                      <X size={11} />
+                    </button>
                   </button>
                 ))}
               </div>
             )}
           </div>
+
+          {/* Export */}
+          {chatHistory.length > 0 && (
+            <div className="sidebar-section">
+              <div className="section-header">
+                <span className="section-title">EXPORT</span>
+              </div>
+              <div className="export-btns">
+                <button className="export-btn" onClick={handleExportTxt}>
+                  <Download size={13} />
+                  <span>Export TXT</span>
+                </button>
+                <button className="export-btn" onClick={handleExportJson}>
+                  <Download size={13} />
+                  <span>Export JSON</span>
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Footer */}

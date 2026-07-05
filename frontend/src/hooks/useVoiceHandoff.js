@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback } from 'react';
-import { API_BASE_URL } from '@/lib/config';
+const API_BASE_URL = 'http://localhost:5001';
 
 /**
  * Strip markdown formatting symbols before passing to TTS.

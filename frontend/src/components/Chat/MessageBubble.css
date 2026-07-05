@@ -12,7 +12,7 @@
 }
 
 .user-row {
-  justify-content: flex-end;
+  justify-content: flex-start;
 }
 
 .ai-row {
@@ -27,8 +27,8 @@
 }
 
 .user-row .message-container {
-  flex-direction: row-reverse;
-  max-width: 680px;
+  flex-direction: row;
+  max-width: 820px;
 }
 
 /* Avatars */
@@ -40,9 +40,9 @@
 .user-avatar-circle {
   width: 32px;
   height: 32px;
-  border-radius: 50%;
   background: var(--bg-elevated);
   border: 1px solid var(--border-strong);
+  border-radius: 6px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -52,12 +52,12 @@
 .ai-avatar-circle {
   width: 32px;
   height: 32px;
-  border-radius: 50%;
-  background: radial-gradient(circle at 35% 35%, #7c6bff, #4338ca);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 0 12px rgba(124, 107, 255, 0.4);
   overflow: hidden;
   padding: 4px;
 }
@@ -78,18 +78,16 @@
 }
 
 .user-row .message-content {
-  align-items: flex-end;
+  align-items: flex-start;
 }
 
 /* Bubbles */
 .user-row .message-text {
-  background: linear-gradient(135deg, #252530, #1e1e26);
-  border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 18px 18px 4px 18px;
-  padding: 10px 16px;
-  color: #fff;
+  background: transparent;
+  border: none;
+  padding: 4px 0;
+  color: var(--text-main);
   font-size: 0.93rem;
-  box-shadow: var(--shadow-sm);
   word-break: break-word;
 }
 
@@ -109,9 +107,7 @@
   padding: 12px 18px;
   background: var(--bg-surface);
   border: 1px solid var(--border-color);
-  border-radius: 14px;
   width: fit-content;
-  box-shadow: var(--shadow-sm);
 }
 
 .status-text {
@@ -126,10 +122,8 @@
   position: relative;
   max-width: 420px;
   max-height: 420px;
-  border-radius: 12px;
   overflow: hidden;
   border: 1px solid var(--border-strong);
-  box-shadow: var(--shadow-md);
   margin-bottom: 6px;
 }
 
@@ -144,14 +138,12 @@
   position: absolute;
   bottom: 10px;
   left: 10px;
-  background: rgba(0, 0, 0, 0.75);
-  backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 20px;
+  background: var(--bg-main);
+  border: 1px solid var(--border-color);
   padding: 4px 10px;
   font-size: 0.75rem;
   font-weight: 600;
-  color: #a093ff;
+  color: var(--text-main);
   display: flex;
   align-items: center;
   gap: 6px;
@@ -162,9 +154,8 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  background: rgba(62, 207, 207, 0.08);
-  border: 1px solid rgba(62, 207, 207, 0.25);
-  border-radius: 10px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
   padding: 8px 14px;
   width: fit-content;
 }
@@ -181,7 +172,7 @@
 .file-name {
   font-size: 0.83rem;
   font-weight: 600;
-  color: #3ecfcf;
+  color: var(--text-main);
 }
 
 .file-meta {
@@ -195,12 +186,11 @@
 }
 
 .artifact-trigger {
-  background: linear-gradient(135deg, rgba(124,107,255,0.12), rgba(62,207,207,0.06));
-  border: 1px solid rgba(124,107,255,0.3);
-  color: #a093ff;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  color: var(--text-main);
   font-weight: 600;
   padding: 8px 16px;
-  border-radius: 10px;
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -208,9 +198,8 @@
 }
 
 .artifact-trigger:hover {
-  background: linear-gradient(135deg, rgba(124,107,255,0.22), rgba(62,207,207,0.12));
-  border-color: rgba(124,107,255,0.5);
-  box-shadow: 0 0 16px rgba(124,107,255,0.2);
+  background: var(--bg-elevated);
+  border-color: var(--border-strong);
   transform: translateY(-1px);
 }
 
@@ -221,7 +210,7 @@
   justify-content: space-between;
   margin-top: 6px;
   padding-top: 6px;
-  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  border-top: none;
   width: 100%;
 }
 
@@ -234,7 +223,6 @@
 .icon-btn {
   background: transparent;
   border: 1px solid transparent;
-  border-radius: 6px;
   color: var(--text-dim);
   padding: 5px;
   cursor: pointer;
@@ -256,15 +244,13 @@
   gap: 6px;
   font-size: 0.72rem;
   color: var(--text-dim);
-  background: var(--bg-surface);
-  border: 1px solid var(--border-color);
-  border-radius: 20px;
+  background: transparent;
+  border: none;
   padding: 3px 10px;
 }
 
 .model-dot {
   width: 5px;
   height: 5px;
-  border-radius: 50%;
-  background: var(--primary);
+  background: var(--text-main);
 }

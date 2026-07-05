@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Sun, Moon } from 'lucide-react';
 import ChatInterface from './components/Chat/ChatInterface';
 import ArtifactPanel from './components/Artifacts/ArtifactPanel';
 import Navbar from './components/Layout/Navbar';
@@ -8,13 +9,14 @@ import { supabase } from './lib/supabaseClient';
 import './index.css';
 
 function App() {
-  const [isDarkMode, setIsDarkMode] = useState(true); // Dark mode default for premium look
+  const [isDarkMode, setIsDarkMode] = useState(true);
   const [session, setSession] = useState(null);
   const [isGuest, setIsGuest] = useState(false);
   const [isArtifactOpen, setIsArtifactOpen] = useState(false);
   const [activeArtifact, setActiveArtifact] = useState(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [activeAgent, setActiveAgent] = useState({ id: null, name: '⚡ General ATLAS' });
+  const [activeAgent, setActiveAgent] = useState({ id: null, name: 'General' });
+  const [selectedModel, setSelectedModel] = useState('Auto');
   const [loadedMessages, setLoadedMessages] = useState(null);
   const [chatResetKey, setChatResetKey] = useState(0);
 
@@ -30,7 +32,7 @@ function App() {
 
   const handleNewChat = () => {
     setLoadedMessages(null);
-    setActiveAgent({ id: null, name: '⚡ General ATLAS' });
+    setActiveAgent({ id: null, name: 'General' });
     setChatResetKey(prev => prev + 1);
   };
 
@@ -75,8 +77,8 @@ function App() {
     return (
       <div className="app-container" style={{ position: 'relative' }}>
         <div style={{ position: 'absolute', top: '16px', right: '16px', zIndex: 100 }}>
-          <button className="btn-silver btn-icon" onClick={toggleTheme} title="Toggle Theme">
-            {isDarkMode ? '☀️' : '🌙'}
+          <button className="btn-silver btn-icon" onClick={toggleTheme} title="Toggle Theme" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            {isDarkMode ? <Sun size={18} /> : <Moon size={18} />}
           </button>
         </div>
         <AuthPage onGuestLogin={() => setIsGuest(true)} />
@@ -94,6 +96,8 @@ function App() {
         activeAgent={activeAgent} 
         onSelectAgent={handleSelectAgent}
         onNewChat={handleNewChat}
+        selectedModel={selectedModel}
+        onSelectModel={setSelectedModel}
       />
       <div className="chat-container">
         <Navbar 
@@ -107,6 +111,7 @@ function App() {
           onOpenArtifact={handleOpenArtifact} 
           activeAgent={activeAgent} 
           loadedMessages={loadedMessages}
+          selectedModel={selectedModel}
         />
       </div>
       
