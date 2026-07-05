@@ -20,10 +20,8 @@ WORKDIR /app
 COPY --chown=user requirements.txt .
 RUN pip install --no-cache-dir --upgrade -r requirements.txt
 
-# Copy application code and voice tensors with correct permissions
+# Copy application code with correct permissions
 COPY --chown=user app/ ./app/
-COPY --chown=user voices/ ./voices/
-COPY --chown=user test_audio_output/ ./test_audio_output/
 
 # Expose FastAPI port (Hugging Face Spaces requires 7860)
 ENV PORT=7860
