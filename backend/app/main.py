@@ -106,7 +106,9 @@ def auto_ingest_user_memory(user_id: str, prompt: str):
             return
             
         # Check if user is asking to completely wipe/clear their entire memory or RAG data
-        if any(phrase in prompt_lower for phrase in ["wipe my memory", "clear my memory", "delete my memory", "wipe rag", "clear rag", "reset memory", "delete all facts", "clear all facts", "wipe all my data", "delete all my data", "clear all my data", "wipe data", "reset rag", "wipe out", "clear memory", "forget everything", "delete everything"]):
+        is_wipe_action = any(w in prompt_lower for w in ["wipe", "clear", "reset", "delete", "purge", "erase"])
+        is_memory_target = any(w in prompt_lower for w in ["memory", "rag", "facts", "data", "everything", "history", "brain"])
+        if is_wipe_action and is_memory_target and len(prompt_lower.split()) <= 12:
             from scaar_engine import wipe_all_scaar_databases
             wipe_all_scaar_databases(user_id)
             print(f"🧠 [RAG Auto-Ingest] Executed full granular wipe for user {user_id}")
@@ -188,6 +190,9 @@ async def chat_endpoint(request: ChatRequest):
         if memory_context and memory_context != "No historical facts recorded yet.":
             request.prompt = f"""\
 You are ATLAS, a helpful and dynamic AI assistant. Respond naturally and helpfully to the user's message. Be concise unless asked for detail. Do not reference any learning technique unless the user specifically asks about studying.
+
+IMPORTANT RULE ON USER MEMORY:
+The [ACTIVE_MEMORY_CONTEXT] below contains background knowledge about the user. DO NOT proactively mention, recite, or bring up these facts in your response unless the user's query directly asks about them or requires them to answer. If the user is just stating a fact (like their name or birthday), simply acknowledge and understand it without repeating previous facts. Treat memory as silent background context.
 
 [ACTIVE_MEMORY_CONTEXT]:
 {memory_context}

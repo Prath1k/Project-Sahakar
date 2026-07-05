@@ -228,8 +228,19 @@ def get_agent_prompt(agent_id: str, memory_context: str) -> str:
     Get the system prompt for a specific agent and inject memory context.
     """
     prompt_template = SYSTEM_PROMPTS.get(agent_id, "You are a helpful assistant.")
-    # Inject the memory context (SCAAR) dynamically
-    return prompt_template.replace("{{scaar_injected_facts}}", memory_context)
+    
+    # Add silent memory instruction so agents don't proactively recite background facts
+    if memory_context and "No historical facts" not in memory_context:
+        memory_instruction = (
+            "IMPORTANT RULE ON USER MEMORY: The active memory context below contains background knowledge "
+            "about the user. DO NOT proactively mention, recite, or bring up these facts in your response unless "
+            "the user's query directly asks about them or requires them to answer. Treat memory as silent background context.\n\n"
+            f"{memory_context}"
+        )
+    else:
+        memory_instruction = memory_context
+
+    return prompt_template.replace("{{scaar_injected_facts}}", memory_instruction)
 
 def build_full_prompt(agent_id: str, memory_context: str, user_input: str) -> str:
     """

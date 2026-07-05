@@ -12,6 +12,14 @@ function App() {
   const [isDarkMode, setIsDarkMode] = useState(true);
   const [session, setSession] = useState(null);
   const [isGuest, setIsGuest] = useState(false);
+  const [guestId] = useState(() => {
+    let gid = sessionStorage.getItem('atlas_guest_id');
+    if (!gid) {
+      gid = 'guest_' + Math.random().toString(36).substring(2, 11);
+      sessionStorage.setItem('atlas_guest_id', gid);
+    }
+    return gid;
+  });
   const [isArtifactOpen, setIsArtifactOpen] = useState(false);
   const [activeArtifact, setActiveArtifact] = useState(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -92,7 +100,10 @@ function App() {
         isOpen={isSidebarOpen} 
         onClose={() => setIsSidebarOpen(false)} 
         userEmail={session?.user?.email || (isGuest ? 'Guest User' : null)} 
-        onSignOut={() => setIsGuest(false)} 
+        onSignOut={() => {
+          sessionStorage.removeItem('atlas_guest_id');
+          setIsGuest(false);
+        }} 
         activeAgent={activeAgent} 
         onSelectAgent={handleSelectAgent}
         onNewChat={handleNewChat}
@@ -112,7 +123,7 @@ function App() {
           activeAgent={activeAgent} 
           loadedMessages={loadedMessages}
           selectedModel={selectedModel}
-          userId={session?.user?.email || session?.user?.id || (isGuest ? 'guest_user' : 'user_sricharan_default')}
+          userId={session?.user?.email || session?.user?.id || (isGuest ? guestId : 'user_sricharan_default')}
         />
       </div>
       
