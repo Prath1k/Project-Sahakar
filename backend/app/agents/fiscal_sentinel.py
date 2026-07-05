@@ -72,7 +72,8 @@ def execute_in_e2b(code: str, artifact_type: str, title: str) -> str:
         raise HTTPException(status_code=500, detail="E2B_API_KEY not configured.")
         
     try:
-        with Sandbox(api_key=e2b_key) as sandbox:
+        os.environ["E2B_API_KEY"] = e2b_key
+        with Sandbox() as sandbox:
             execution = sandbox.run_code(code)
             
             output = ""
