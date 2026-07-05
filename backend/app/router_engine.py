@@ -109,7 +109,7 @@ async def route_query(request: Any, target_model: str = None, target_provider: s
             provider = "SambaNova"
             
         elif getattr(request, 'is_complex_artifact', False):
-            model_id = "gemini-1.5-pro"
+            model_id = "gemini-2.5-flash"
             provider = "Google AI Studio"
             
         else:

@@ -178,13 +178,13 @@ You are ATLAS, a helpful and dynamic AI assistant. Respond naturally and helpful
             target_model = "meta/llama-3.2-11b-vision-instruct"  # Blueprint: NVIDIA NIM vision
             target_provider = "NVIDIA NIM"
         elif mo == "Cerebras":
-            target_model = "llama-3.3-70b"  # Updated: llama3.1-8b removed
+            target_model = "gpt-oss-120b"  # Updated: active Cerebras flagship model
             target_provider = "Cerebras"
         elif mo == "OpenRouter":
-            target_model = "google/gemma-3-27b-it:free"  # OpenRouter free catalog
+            target_model = "meta-llama/llama-3.3-70b-instruct:free"  # OpenRouter free catalog
             target_provider = "OpenRouter"
         elif mo == "Gemini":
-            target_model = "gemini-1.5-pro"
+            target_model = "gemini-2.5-flash"
             target_provider = "Google AI Studio"
             
         result = await route_query(request, target_model=target_model, target_provider=target_provider)
