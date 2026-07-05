@@ -76,10 +76,13 @@ def test_02_rag_document_ocean():
 def test_03_intelligent_agents():
     print("\n--- Testing Intelligent Agents ---")
     agents_to_test = [
-        ("scholar_core", "Explain the Feynman technique simply."),
-        ("nexus_strategist", "Plan a productive morning routine for me."),
-        ("zenith_counsel", "I am feeling overwhelmed with work deadlines."),
-        ("career_architect", "Give me tips for a tech resume.")
+        ("scholar_core", "Explain how to study effectively for an upcoming exam."),
+        ("career_architect", "Give me tips for a tech resume and interview preparation."),
+        ("fiscal_sentinel", "How should I structure my monthly budget and analyze burn rate?"),
+        ("velocity_form", "Design a progressive overload principle workout for strength."),
+        ("biometrics_pilot", "How do sleep duration and heart rate trends correlate with daily energy?"),
+        ("zenith_counsel", "I am feeling overwhelmed with work deadlines and need CBT reframing."),
+        ("nexus_strategist", "Plan a productive morning routine and schedule for me.")
     ]
     for agent_id, prompt in agents_to_test:
         print(f"\n  Testing Agent: {agent_id}...")

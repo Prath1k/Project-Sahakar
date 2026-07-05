@@ -2,10 +2,11 @@ import React, { useEffect, useState } from 'react';
 import { Zap, GraduationCap, Briefcase, BarChart3, Activity, Brain, Compass } from 'lucide-react';
 
 const AGENT_CONFIGS = {
-  scholar_core:      { icon: GraduationCap, desc: 'Feynman method · RAG study · Flashcards' },
+  scholar_core:      { icon: GraduationCap, desc: 'Academic mastery · RAG study · Flashcards' },
   career_architect:  { icon: Briefcase, desc: 'ATS optimizer · Mock interviews · Roadmaps' },
   fiscal_sentinel:   { icon: BarChart3, desc: 'Budget · Burn-rate · Financial intelligence' },
   velocity_form:     { icon: Activity, desc: 'Adaptive training · Autoregulation · Macros' },
+  biometrics_pilot:  { icon: Activity, desc: 'Biometric trends · Lifestyle correlations · Health' },
   zenith_counsel:    { icon: Brain, desc: 'CBT · Emotional support · Crisis detection' },
   nexus_strategist:  { icon: Compass, desc: 'Itineraries · Scheduling · Logistics' },
 };

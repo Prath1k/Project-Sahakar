@@ -4,13 +4,14 @@ import { supabase } from '../../lib/supabaseClient';
 import './Sidebar.css';
 
 const AGENTS = [
-  { id: null,               name: 'General',   subtitle: 'Auto-Routing' },
-  { id: 'scholar_core',     name: 'Scholar',   subtitle: 'Academic Intelligence' },
-  { id: 'career_architect', name: 'Career',    subtitle: 'Career Optimization' },
-  { id: 'fiscal_sentinel',  name: 'Finance',   subtitle: 'Financial Intelligence' },
-  { id: 'velocity_form',    name: 'Fitness',   subtitle: 'Fitness & Physiology' },
-  { id: 'zenith_counsel',   name: 'Wellness',  subtitle: 'Cognitive Health' },
-  { id: 'nexus_strategist', name: 'Planner',   subtitle: 'Logistics & Planning' },
+  { id: null,               name: 'General',    subtitle: 'Auto-Routing' },
+  { id: 'scholar_core',     name: 'Scholar',    subtitle: 'Academic Intelligence' },
+  { id: 'career_architect', name: 'Career',     subtitle: 'Career Optimization' },
+  { id: 'fiscal_sentinel',  name: 'Finance',    subtitle: 'Financial Intelligence' },
+  { id: 'velocity_form',    name: 'Fitness',    subtitle: 'Fitness & Physiology' },
+  { id: 'biometrics_pilot', name: 'Biometrics', subtitle: 'Preventative Health' },
+  { id: 'zenith_counsel',   name: 'Wellness',   subtitle: 'Cognitive Health' },
+  { id: 'nexus_strategist', name: 'Planner',    subtitle: 'Logistics & Planning' },
 ];
 
 const MODELS = [
