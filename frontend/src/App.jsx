@@ -112,6 +112,7 @@ function App() {
           activeAgent={activeAgent} 
           loadedMessages={loadedMessages}
           selectedModel={selectedModel}
+          userId={session?.user?.email || session?.user?.id || (isGuest ? 'guest_user' : 'user_sricharan_default')}
         />
       </div>
       

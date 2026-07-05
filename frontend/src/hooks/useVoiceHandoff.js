@@ -82,6 +82,7 @@ export function useVoiceHandoff(onSpeechDetected) {
       } catch (e) {
         console.error(e);
       }
+      mediaRecorderRef.current = null;
     }
     setIsListening(false);
   }, []);
@@ -96,6 +97,13 @@ export function useVoiceHandoff(onSpeechDetected) {
       return;
     }
 
+    if (mediaRecorderRef.current) {
+      try {
+        mediaRecorderRef.current.abort();
+      } catch (e) {}
+      mediaRecorderRef.current = null;
+    }
+
     try {
       const recognition = new SpeechRecognition();
       mediaRecorderRef.current = recognition;
@@ -103,32 +111,62 @@ export function useVoiceHandoff(onSpeechDetected) {
       recognition.lang = 'en-US';
       recognition.interimResults = false;
       recognition.maxAlternatives = 1;
+      recognition.continuous = true; // Prevent brief pauses from cutting off speech
+
+      let silenceTimer = null;
+      const clearTimer = () => {
+        if (silenceTimer) {
+          clearTimeout(silenceTimer);
+          silenceTimer = null;
+        }
+      };
 
       recognition.onstart = () => {
         setIsListening(true);
         console.log('[ATLAS Mic] Microphone OPEN. Listening for speech...');
+        silenceTimer = setTimeout(() => {
+          console.log('[ATLAS Mic] 8 seconds silence timeout reached. Closing mic.');
+          clearTimer();
+          if (mediaRecorderRef.current === recognition) {
+            try { recognition.stop(); } catch (e) {}
+          }
+        }, 8000);
       };
 
       recognition.onresult = (event) => {
-        const transcript = event.results[0][0].transcript;
+        clearTimer();
+        let transcript = '';
+        for (let i = event.resultIndex; i < event.results.length; ++i) {
+          transcript += event.results[i][0].transcript;
+        }
+        transcript = transcript.trim();
         console.log('[ATLAS Mic] Speech detected:', transcript);
-        if (onSpeechRecognized) {
+        if (transcript && onSpeechRecognized) {
+          try { recognition.stop(); } catch (e) {}
           onSpeechRecognized(transcript);
         }
       };
 
       recognition.onspeechend = () => {
-        recognition.stop();
+        clearTimer();
+        try { recognition.stop(); } catch (e) {}
       };
 
       recognition.onend = () => {
+        clearTimer();
+        if (mediaRecorderRef.current === recognition) {
+          mediaRecorderRef.current = null;
+        }
         setIsListening(false);
         playGracefulCloseCue();
       };
 
       recognition.onerror = (event) => {
-        console.error('[ATLAS Mic] Speech recognition error:', event.error);
-        setIsListening(false);
+        clearTimer();
+        console.warn('[ATLAS Mic] Speech recognition error:', event.error);
+        if (event.error !== 'no-speech' && event.error !== 'aborted') {
+          setIsListening(false);
+        }
       };
 
       recognition.start();

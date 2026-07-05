@@ -98,12 +98,26 @@ def auto_ingest_user_memory(user_id: str, prompt: str):
     Automatically detects declarative statements or user facts and ingests them into RAG memory.
     """
     try:
-        from scaar_engine import ReconciliationEngine, DocumentOceanEngine, FactAddRequest, DocumentIngestRequest
+        from scaar_engine import ReconciliationEngine, DocumentOceanEngine, FactAddRequest, DocumentIngestRequest, FACT_DB_PATH
+        import sqlite3
         prompt_lower = prompt.lower().strip()
         # Don't ingest simple questions or greetings
         if prompt_lower.startswith(("what ", "why ", "how ", "who ", "where ", "when ", "can you", "could you", "do you", "is there", "are there", "hello", "hi ", "hey")):
             return
             
+        # Check if user is asking to forget/delete a fact
+        if any(w in prompt_lower for w in ["forget ", "delete ", "remove ", "ignore ", "don't remember", "do not remember"]):
+            conn = sqlite3.connect(FACT_DB_PATH)
+            cursor = conn.cursor()
+            words = [w for w in prompt_lower.replace("forget", "").replace("delete", "").replace("remove", "").replace("that", "").replace("my", "").replace("its", "").replace("it's", "").replace("is", "").replace("today", "").split() if len(w) > 2]
+            if words:
+                for w in words:
+                    cursor.execute("UPDATE atomic_facts SET is_active = 0 WHERE user_id = ? AND LOWER(fact_text) LIKE ?", (user_id, f"%{w}%"))
+                conn.commit()
+            conn.close()
+            print(f"🧠 [RAG Auto-Ingest] Deactivated/forgot facts matching '{words}' for user {user_id}")
+            return
+
         fact_keywords = ["my ", "our ", "we ", "i am", "i'm", "remember", "note that", "is ", "code is", "region", "deploy", "study", "name is", "live in", "budget", "burn rate", "using", "project", "prefer", "favorite", "created", "built"]
         if any(kw in prompt_lower for kw in fact_keywords) and len(prompt) > 10:
             cat = "general"

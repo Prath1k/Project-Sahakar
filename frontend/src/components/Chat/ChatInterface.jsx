@@ -14,7 +14,7 @@ const DEFAULT_WELCOME = {
   modelInfo: 'ATLAS'
 };
 
-const ChatInterface = ({ onOpenArtifact, activeAgent, loadedMessages, selectedModel }) => {
+const ChatInterface = ({ onOpenArtifact, activeAgent, loadedMessages, selectedModel, userId = 'user_sricharan_default' }) => {
   const [messages, setMessages] = useState(() => loadedMessages || [DEFAULT_WELCOME]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isAutoSpeak, setIsAutoSpeak] = useState(false);
@@ -133,7 +133,7 @@ const ChatInterface = ({ onOpenArtifact, activeAgent, loadedMessages, selectedMo
         if (attachedFile.type === 'application/pdf' || attachedFile.name.endsWith('.pdf')) {
           const formData = new FormData();
           formData.append('file', attachedFile.file);
-          formData.append('user_id', 'user_sricharan_default');
+          formData.append('user_id', userId);
           formData.append('title', attachedFile.name);
 
           const ingestRes = await fetch(`${API_BASE_URL}/api/memory/ingest-pdf`, {
@@ -187,12 +187,14 @@ const ChatInterface = ({ onOpenArtifact, activeAgent, loadedMessages, selectedMo
         prompt: formattedPrompt,
         parameters: selectedParams,
         has_image: !!imageBase64,
-        image_base64: imageBase64
+        image_base64: imageBase64,
+        user_id: userId
       } : {
         prompt: formattedPrompt,
         has_image: !!imageBase64,
         image_base64: imageBase64,
-        override_model: effectiveModel !== 'Auto' ? effectiveModel : null
+        override_model: effectiveModel !== 'Auto' ? effectiveModel : null,
+        user_id: userId
       };
 
       const res = await fetch(`${API_BASE_URL}${endpoint}`, {

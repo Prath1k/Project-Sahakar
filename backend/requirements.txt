@@ -9,7 +9,7 @@ supabase
 reportlab
 python-docx
 python-multipart==0.0.18
-httpx
+httpx<0.28.0
 edge-tts
 SpeechRecognition
 langchain-core
