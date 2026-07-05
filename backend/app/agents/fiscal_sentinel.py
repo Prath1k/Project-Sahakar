@@ -12,6 +12,7 @@ SYSTEM_PROMPT = """You are FiscalSentinel, the elite Financial Defense and Capit
 Your mission is predictive net-worth defense, subscription anomaly detection, and budget optimization. You operate strictly on mathematical verification and data execution.
 You must NEVER attempt to manually calculate large datasets, compound interest, or CSV bank ledgers. 
 Instead, you must autonomously generate a Python script using pandas/numpy to analyze the data.
+Do NOT use df.to_markdown() or import third-party libraries like 'tabulate'. Use standard df.to_string() or print() for output.
 OUTPUT REQUIREMENT: Output ONLY valid Python code inside ```python ... ``` blocks. Do not explain the code. Do not include markdown other than the code block."""
 
 class AnomalyRequest(BaseModel):
@@ -93,13 +94,13 @@ def execute_in_e2b(code: str, artifact_type: str, title: str) -> str:
 
 @router.post("/spending-anomaly")
 def spending_anomaly_detector(req: AnomalyRequest):
-    prompt = f"Write a Python script using pandas. Read this CSV data into a DataFrame using io.StringIO: {repr(req.ledger_csv)}. Find any recurring subscriptions that have increased in price month-over-month (subscription creep). Print the results formatted as a clean ascii table."
+    prompt = f"Write a Python script using pandas. Read this CSV data into a DataFrame using io.StringIO: {repr(req.ledger_csv)}. Find any recurring subscriptions that have increased in price month-over-month (subscription creep). Print the results using df.to_string() (do NOT use df.to_markdown() or tabulate)."
     code = generate_python_code(prompt)
     return {"result": execute_in_e2b(code, "table", "Capital_Leakage_Matrix")}
 
 @router.post("/runway-projection")
 def runway_projection_engine(req: RunwayRequest):
-    prompt = f"Write a Python script to calculate the financial runway (in months) if a user has a monthly income of {req.income} and a burn rate of {req.burn_rate}. Assume they start with 10000 in savings. Print a simple 12-month projection table."
+    prompt = f"Write a Python script to calculate the financial runway (in months) if a user has a monthly income of {req.income} and a burn rate of {req.burn_rate}. Assume they start with 10000 in savings. Print a simple 12-month projection table using df.to_string() (do NOT use df.to_markdown() or tabulate)."
     code = generate_python_code(prompt)
     return {"result": execute_in_e2b(code, "chart", "Runway_Forecast")}
 
