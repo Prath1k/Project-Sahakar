@@ -242,13 +242,13 @@ def get_agent_prompt(agent_id: str, memory_context: str) -> str:
 
     return prompt_template.replace("{{scaar_injected_facts}}", memory_instruction)
 
-def build_full_prompt(agent_id: str, memory_context: str, user_input: str) -> str:
+def build_full_prompt(agent_id: str, memory_context: str, user_input: str, history_context: str = "") -> str:
     """
-    Builds the full prompt including the user input.
+    Builds the full prompt including the user input and recent conversation history.
     Can be easily wrapped in LangChain's ChatPromptTemplate if needed for chaining.
     """
     base_prompt = get_agent_prompt(agent_id, memory_context)
-    full_prompt = base_prompt.replace("{{user_input}}", user_input)
+    full_prompt = base_prompt.replace("{{user_input}}", f"{history_context}[CURRENT USER MESSAGE]: {user_input}")
     
     # Example of using ChatPromptTemplate (though we return a string for standard API calls)
     template = ChatPromptTemplate.from_template(full_prompt)

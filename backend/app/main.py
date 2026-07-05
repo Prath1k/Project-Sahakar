@@ -2,7 +2,7 @@ from fastapi import FastAPI, HTTPException
 # Trigger reload to load new pip dependencies
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, List, Dict, Any
 from dotenv import load_dotenv
 
 # Load environment variables
@@ -27,6 +27,7 @@ class ChatRequest(BaseModel):
     user_id: str = "user_sricharan_default"
     image_base64: Optional[str] = None
     override_model: Optional[str] = None
+    history: Optional[List[Dict[str, Any]]] = None
 
 class AgentChatRequest(BaseModel):
     agent_id: str = "scholar_core"
@@ -34,6 +35,7 @@ class AgentChatRequest(BaseModel):
     has_image: bool = False
     is_complex_artifact: bool = False
     user_id: str = "user_sricharan_default"
+    history: Optional[List[Dict[str, Any]]] = None
     
 class ChatResponse(BaseModel):
     model_used: str
@@ -187,6 +189,18 @@ async def chat_endpoint(request: ChatRequest):
         
         memory_context = f"{fact_header}\n{doc_context}".strip()
         
+        history_list = getattr(request, "history", None)
+        history_context = ""
+        if history_list and isinstance(history_list, list):
+            formatted_msgs = []
+            for m in history_list:
+                role = "User" if m.get("sender") == "user" else "ATLAS"
+                text_val = m.get("text", "").strip()
+                if text_val:
+                    formatted_msgs.append(f"{role}: {text_val}")
+            if formatted_msgs:
+                history_context = "\n[RECENT CONVERSATION HISTORY]:\n" + "\n".join(formatted_msgs) + "\n\n"
+        
         if memory_context and memory_context != "No historical facts recorded yet.":
             request.prompt = f"""\
 You are ATLAS, a helpful and dynamic AI assistant. Respond naturally and helpfully to the user's message. Be concise unless asked for detail. Do not reference any learning technique unless the user specifically asks about studying.
@@ -196,12 +210,10 @@ The [ACTIVE_MEMORY_CONTEXT] below contains background knowledge about the user. 
 
 [ACTIVE_MEMORY_CONTEXT]:
 {memory_context}
-
-[USER MESSAGE]: {request.prompt}"""
+{history_context}[CURRENT USER MESSAGE]: {request.prompt}"""
         else:
             request.prompt = f"""You are ATLAS, a helpful and dynamic AI assistant. Respond naturally to the user.
-
-[USER MESSAGE]: {request.prompt}"""
+{history_context}[CURRENT USER MESSAGE]: {request.prompt}"""
         
         target_model = None
         target_provider = None
@@ -260,7 +272,19 @@ async def agent_chat_endpoint(request: AgentChatRequest):
             memory_context = "No historical facts or document chunks found."
         
         # 2. Prompt Builder: Grab agent prompt and inject facts and user input
-        full_prompt = build_full_prompt(request.agent_id, memory_context, request.prompt)
+        history_list = getattr(request, "history", None)
+        history_context = ""
+        if history_list and isinstance(history_list, list):
+            formatted_msgs = []
+            for m in history_list:
+                role = "User" if m.get("sender") == "user" else "ATLAS"
+                text_val = m.get("text", "").strip()
+                if text_val:
+                    formatted_msgs.append(f"{role}: {text_val}")
+            if formatted_msgs:
+                history_context = "\n[RECENT CONVERSATION HISTORY]:\n" + "\n".join(formatted_msgs) + "\n\n"
+        
+        full_prompt = build_full_prompt(request.agent_id, memory_context, request.prompt, history_context=history_context)
         
         # Create a ChatRequest for the router with the newly built full prompt
         router_request = ChatRequest(

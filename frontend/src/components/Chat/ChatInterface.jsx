@@ -182,19 +182,29 @@ const ChatInterface = ({ onOpenArtifact, activeAgent, loadedMessages, selectedMo
       }
 
       const endpoint = activeAgent && activeAgent.id ? '/agent/chat' : '/chat';
+      const historyPayload = messages
+        .filter(m => m && m.text && m.text.trim())
+        .slice(-10)
+        .map(m => ({
+          sender: m.sender === 'user' ? 'user' : 'ai',
+          text: m.text
+        }));
+
       const bodyPayload = activeAgent && activeAgent.id ? {
         agent_id: activeAgent.id,
         prompt: formattedPrompt,
         parameters: selectedParams,
         has_image: !!imageBase64,
         image_base64: imageBase64,
-        user_id: userId
+        user_id: userId,
+        history: historyPayload
       } : {
         prompt: formattedPrompt,
         has_image: !!imageBase64,
         image_base64: imageBase64,
         override_model: effectiveModel !== 'Auto' ? effectiveModel : null,
-        user_id: userId
+        user_id: userId,
+        history: historyPayload
       };
 
       const res = await fetch(`${API_BASE_URL}${endpoint}`, {
