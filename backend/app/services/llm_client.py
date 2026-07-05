@@ -8,7 +8,8 @@ PROVIDER_URLS = {
     "SambaNova": "https://api.sambanova.ai/v1/chat/completions",
     "Cerebras": "https://api.cerebras.ai/v1/chat/completions",
     "Google AI Studio": "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
-    "NVIDIA NIM": "https://integrate.api.nvidia.com/v1/chat/completions"
+    "NVIDIA NIM": "https://integrate.api.nvidia.com/v1/chat/completions",
+    "OpenRouter": "https://openrouter.ai/api/v1/chat/completions"
 }
 
 from typing import Optional

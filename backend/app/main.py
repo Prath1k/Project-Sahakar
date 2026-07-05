@@ -50,6 +50,10 @@ def read_root():
 from agents.career_architect import router as career_architect_router
 from agents.fiscal_sentinel import router as fiscal_sentinel_router
 from agents.biometrics_pilot import router as biometrics_pilot_router
+from agents.velocity_form import router as velocity_form_router
+from agents.zenith_counsel import router as zenith_counsel_router
+from agents.nexus_strategist import router as nexus_strategist_router
+from image_gen_router import router as image_gen_router
 from voice_service import router as voice_router
 from stt_service import router as stt_router
 from auth_service import router as auth_router
@@ -58,6 +62,10 @@ from rag_router import router as rag_router
 app.include_router(career_architect_router, prefix="/api/career", tags=["CareerArchitect"])
 app.include_router(fiscal_sentinel_router, prefix="/api/fiscal", tags=["FiscalSentinel"])
 app.include_router(biometrics_pilot_router, prefix="/api/biometrics", tags=["BiometricsPilot"])
+app.include_router(velocity_form_router, prefix="/api/fitness", tags=["VelocityForm"])
+app.include_router(zenith_counsel_router, prefix="/api/zenith", tags=["ZenithCounsel"])
+app.include_router(nexus_strategist_router, prefix="/api/nexus", tags=["NexusStrategist"])
+app.include_router(image_gen_router, prefix="/api/image-gen", tags=["Image Generation"])
 app.include_router(voice_router, prefix="/api/tts", tags=["Voice & TTS"])
 app.include_router(stt_router, prefix="/api/stt", tags=["Speech-To-Text & Ears"])
 app.include_router(auth_router, prefix="/api/auth", tags=["Auth & Identity"])
@@ -69,15 +77,17 @@ app.include_router(rag_router, prefix="/api/memory", tags=["SCAAR Memory & RAG"]
 
 @app.get("/models")
 def get_models():
-    """Return available models in the roster"""
+    """Return the live model roster — matches actual routing in router_engine.py"""
     return {
         "models": [
-            {"id": "groq-llama-3-3", "name": "Groq Llama 3.3 70B", "provider": "Groq", "purpose": "Default chat, UI scripting"},
-            {"id": "sambanova-deepseek-r1", "name": "DeepSeek R1", "provider": "SambaNova", "purpose": "Complex code, reasoning"},
-            {"id": "sambanova-llama-405b", "name": "Llama-3.1-405B", "provider": "SambaNova", "purpose": "Long context, multi-document"},
-            {"id": "cerebras-qwen", "name": "Qwen 3-235B", "provider": "Cerebras", "purpose": "High-throughput batch"},
-            {"id": "gemini-1-5-pro", "name": "Gemini 1.5 Pro", "provider": "Google AI Studio", "purpose": "Complex artifacts"},
-            {"id": "nvidia-nim-vision", "name": "Vision Models", "provider": "NVIDIA NIM", "purpose": "Vision tasks"}
+            {"id": "auto", "name": "🌟 Auto Router", "provider": "ATLAS", "purpose": "Intelligent routing to best model", "is_default": True},
+            {"id": "groq-llama-3-3", "name": "⚡ Groq Llama 3.3 70B", "provider": "Groq", "purpose": "Default chat, fast responses"},
+            {"id": "sambanova-deepseek-r1", "name": "🧠 DeepSeek R1", "provider": "SambaNova", "purpose": "Complex reasoning & code"},
+            {"id": "sambanova-maverick", "name": "📚 Llama-4-Maverick", "provider": "SambaNova", "purpose": "Long context, multi-document analysis (128K tokens)"},
+            {"id": "cerebras-llama", "name": "🚀 Cerebras Llama 3.3 70B", "provider": "Cerebras", "purpose": "High-speed batch processing"},
+            {"id": "gemini-1-5-pro", "name": "✨ Gemini 1.5 Pro", "provider": "Google AI Studio", "purpose": "Complex artifacts, large documents"},
+            {"id": "nvidia-nim-vision", "name": "👁️ NVIDIA NIM Vision", "provider": "NVIDIA NIM", "purpose": "Vision tasks, image understanding"},
+            {"id": "openrouter-free", "name": "📡 OpenRouter", "provider": "OpenRouter", "purpose": "Multi-model showcase (Gemma, Mistral, Claude)"}
         ]
     }
 
@@ -140,7 +150,17 @@ async def chat_endpoint(request: ChatRequest):
         memory_context = f"{fact_header}\n{doc_context}".strip()
         
         if memory_context and memory_context != "No historical facts recorded yet.":
-            request.prompt = f"Active Memory Context:\n{memory_context}\n\nUser Question: {request.prompt}"
+            request.prompt = f"""\
+You are ATLAS, a helpful and dynamic AI assistant. Respond naturally and helpfully to the user's message. Be concise unless asked for detail. Do not reference any learning technique unless the user specifically asks about studying.
+
+[ACTIVE_MEMORY_CONTEXT]:
+{memory_context}
+
+[USER MESSAGE]: {request.prompt}"""
+        else:
+            request.prompt = f"""You are ATLAS, a helpful and dynamic AI assistant. Respond naturally to the user.
+
+[USER MESSAGE]: {request.prompt}"""
         
         target_model = None
         target_provider = None
@@ -148,15 +168,24 @@ async def chat_endpoint(request: ChatRequest):
         if mo == "Groq":
             target_model = "llama-3.3-70b-versatile"
             target_provider = "Groq"
-        elif mo == "SambaNova":
-            target_model = "Meta-Llama-3.1-405B-Instruct"
+        elif mo == "SambaNova" or mo == "DeepSeek":
+            target_model = "DeepSeek-R1"  # Blueprint: reasoning/code → DeepSeek-R1
+            target_provider = "SambaNova"
+        elif mo == "Maverick" or mo == "LongContext":
+            target_model = "Llama-4-Maverick-17B-128E-Instruct"  # Blueprint: long context
             target_provider = "SambaNova"
         elif mo == "Nvidia":
-            target_model = "meta/llama-3.1-70b-instruct" if not getattr(request, 'has_image', False) else "meta/llama-3.2-90b-vision-instruct"
+            target_model = "meta/llama-3.2-11b-vision-instruct"  # Blueprint: NVIDIA NIM vision
             target_provider = "NVIDIA NIM"
         elif mo == "Cerebras":
-            target_model = "llama3.1-8b"
+            target_model = "llama-3.3-70b"  # Updated: llama3.1-8b removed
             target_provider = "Cerebras"
+        elif mo == "OpenRouter":
+            target_model = "google/gemma-3-27b-it:free"  # OpenRouter free catalog
+            target_provider = "OpenRouter"
+        elif mo == "Gemini":
+            target_model = "gemini-1.5-pro"
+            target_provider = "Google AI Studio"
             
         result = await route_query(request, target_model=target_model, target_provider=target_provider)
         return result

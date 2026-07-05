@@ -46,7 +46,14 @@ FACT_DB_PATH = os.path.join(os.path.dirname(__file__), "scaar_fact_brain.db")
 VECTOR_DB_PATH = os.path.join(os.path.dirname(__file__), "scaar_document_ocean.db")
 
 # ChromaDB Integration for The Document Ocean (True Unlimited Memory)
-CHROMA_DIR = os.path.join(os.path.dirname(__file__), "chroma_storage")
+# Use /data for Hugging Face Spaces persistent storage (survives container restarts)
+# Fall back to local path in dev environments
+import sys
+if os.path.exists("/data"):
+    CHROMA_DIR = "/data/chroma_storage"  # HF Spaces persistent volume
+else:
+    CHROMA_DIR = os.path.join(os.path.dirname(__file__), "chroma_storage")  # local dev
+
 try:
     import chromadb
     chroma_client = chromadb.PersistentClient(path=CHROMA_DIR)
@@ -138,6 +145,9 @@ class DocumentIngestRequest(BaseModel):
     text_content: str = Field(..., description="Full text content to chunk and vectorize")
     category: str = Field("study_guide", description="Document category")
     metadata: Optional[Dict[str, Any]] = Field(default={}, description="Additional metadata")
+    # PDF-specific pinpointing fields
+    source_page: Optional[int] = Field(None, description="Page number this chunk came from (for PDF pinpointing)")
+    chunk_index: Optional[int] = Field(None, description="Sequential chunk index within the page")
 
 class RAGSearchRequest(BaseModel):
     user_id: str = Field("user_sricharan_default", description="Target user ID")
@@ -368,13 +378,20 @@ class DocumentOceanEngine:
                     chunk_id = f"{doc_id}_chunk_{idx}"
                     ids.append(chunk_id)
                     documents.append(chunk_text)
-                    metadatas.append({
+                    # Build rich metadata for persistent pinpointing
+                    meta_entry = {
                         "user_id": req.user_id,
                         "doc_id": doc_id,
                         "title": req.title,
                         "chunk_index": idx,
+                        "category": req.category,
+                        "ingest_timestamp": now,
                         **(req.metadata or {})
-                    })
+                    }
+                    # Include PDF page number if provided
+                    if req.source_page is not None:
+                        meta_entry["source_page"] = req.source_page
+                    metadatas.append(meta_entry)
                 if ids:
                     doc_collection.upsert(ids=ids, documents=documents, metadatas=metadatas)
                 logger.info(f"Ingested document '{req.title}' into ChromaDB Document Ocean | Chunks: {len(ids)} | Doc ID: {doc_id}")
@@ -480,6 +497,71 @@ class DocumentOceanEngine:
         # Sort by descending similarity score and return top_k
         scored_chunks.sort(key=lambda x: x.similarity_score, reverse=True)
         return scored_chunks[:req.top_k]
+
+    @classmethod
+    def list_documents(cls, user_id: str) -> List[Dict[str, Any]]:
+        """
+        Returns a deduplicated list of all documents indexed for the user.
+        Works from ChromaDB metadata so documents are visible even after container restarts.
+        Each entry includes: doc_id, title, category, chunk_count, ingest_time, source_pages.
+        """
+        if HAS_CHROMA and doc_collection is not None:
+            try:
+                # Get all items for this user
+                result = doc_collection.get(
+                    where={"user_id": user_id},
+                    include=["metadatas"]
+                )
+                seen_docs: Dict[str, Any] = {}
+                for meta in (result.get("metadatas") or []):
+                    doc_id = meta.get("doc_id", "unknown")
+                    if doc_id not in seen_docs:
+                        seen_docs[doc_id] = {
+                            "doc_id": doc_id,
+                            "title": meta.get("title", "Untitled"),
+                            "category": meta.get("category", "general"),
+                            "chunk_count": 0,
+                            "ingest_time": meta.get("ingest_timestamp", 0),
+                            "pages_indexed": set()
+                        }
+                    seen_docs[doc_id]["chunk_count"] += 1
+                    pg = meta.get("source_page")
+                    if pg is not None:
+                        seen_docs[doc_id]["pages_indexed"].add(pg)
+
+                # Serialize for JSON response
+                docs = []
+                for d in seen_docs.values():
+                    pages = sorted(d["pages_indexed"])
+                    docs.append({
+                        "doc_id": d["doc_id"],
+                        "title": d["title"],
+                        "category": d["category"],
+                        "chunk_count": d["chunk_count"],
+                        "total_pages": len(pages) if pages else None,
+                        "page_range": f"pp. {pages[0]}–{pages[-1]}" if len(pages) > 1 else (f"p. {pages[0]}" if pages else None),
+                        "ingest_time": d["ingest_time"],
+                        "storage": "ChromaDB (Persistent)"
+                    })
+                return sorted(docs, key=lambda x: x["ingest_time"], reverse=True)
+            except Exception as e:
+                logger.warning(f"ChromaDB list_documents failed ({e}), checking SQLite...")
+
+        # SQLite fallback
+        conn = sqlite3.connect(VECTOR_DB_PATH)
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT doc_id, title, COUNT(*) as chunk_count, MIN(created_at)
+            FROM document_vectors WHERE user_id = ?
+            GROUP BY doc_id, title ORDER BY MIN(created_at) DESC
+        """, (user_id,))
+        rows = cursor.fetchall()
+        conn.close()
+        return [
+            {"doc_id": r[0], "title": r[1], "chunk_count": r[2],
+             "ingest_time": r[3], "storage": "SQLite (Fallback)"}
+            for r in rows
+        ]
 
 
 # ---------------------------------------------------------------------------

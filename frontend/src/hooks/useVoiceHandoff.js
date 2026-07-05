@@ -1,10 +1,42 @@
 import { useState, useRef, useCallback } from 'react';
 import { API_BASE_URL } from '@/lib/config';
 
+/**
+ * Strip markdown formatting symbols before passing to TTS.
+ * Prevents voice from reading "hashtag hashtag" or "asterisk asterisk bold asterisk asterisk" etc.
+ */
+function cleanTextForSpeech(text) {
+  return text
+    // Remove [DOC: ...] RAG context prefixes
+    .replace(/\[DOC:[^\]]*\]/gi, '')
+    // Remove atlas_artifact XML tags
+    .replace(/<\/?atlas_artifact[^>]*>/gi, '')
+    // Remove markdown headings (#, ##, ###)
+    .replace(/#{1,6}\s+/g, '')
+    // Remove bold/italic (**text**, *text*, __text__, _text_)
+    .replace(/(\*{1,3}|_{1,3})(.*?)\1/g, '$2')
+    // Remove inline code (`code`)
+    .replace(/`{1,3}[^`]*`{1,3}/g, '')
+    // Remove markdown links [text](url)
+    .replace(/\[([^\]]+)\]\([^)]*\)/g, '$1')
+    // Remove blockquote markers
+    .replace(/^>\s+/gm, '')
+    // Remove horizontal rules
+    .replace(/^---+$/gm, '')
+    // Remove bullet/numbered list markers
+    .replace(/^[\s]*[-*+]\s+/gm, '')
+    .replace(/^[\s]*\d+\.\s+/gm, '')
+    // Collapse multiple newlines
+    .replace(/\n{3,}/g, '\n\n')
+    // Trim result
+    .trim();
+}
+
 export function useVoiceHandoff(onSpeechDetected) {
   const [isListening, setIsListening] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
   const mediaRecorderRef = useRef(null);
-  const timerRef = useRef(null);
+  const currentAudioRef = useRef(null); // Track active Audio object for interruption
 
   // Play a gentle "bloop" sound when mic closes due to silence
   const playGracefulCloseCue = useCallback(() => {
@@ -26,10 +58,27 @@ export function useVoiceHandoff(onSpeechDetected) {
     }
   }, []);
 
+  /**
+   * Stop any currently playing audio immediately.
+   * Called at the start of every new user message.
+   */
+  const stopCurrentSpeech = useCallback(() => {
+    if (currentAudioRef.current) {
+      try {
+        currentAudioRef.current.pause();
+        currentAudioRef.current.src = '';
+        currentAudioRef.current = null;
+      } catch (e) {
+        // ignore
+      }
+      setIsSpeaking(false);
+    }
+  }, []);
+
   const stopListening = useCallback(() => {
     if (mediaRecorderRef.current) {
       try {
-        mediaRecorderRef.current.abort(); // aborts the SpeechRecognition instance
+        mediaRecorderRef.current.abort();
       } catch (e) {
         console.error(e);
       }
@@ -49,7 +98,7 @@ export function useVoiceHandoff(onSpeechDetected) {
 
     try {
       const recognition = new SpeechRecognition();
-      mediaRecorderRef.current = recognition; // Reusing the ref to hold the recognition instance
+      mediaRecorderRef.current = recognition;
       
       recognition.lang = 'en-US';
       recognition.interimResults = false;
@@ -91,11 +140,19 @@ export function useVoiceHandoff(onSpeechDetected) {
   }, [playGracefulCloseCue]);
 
   const speakAtlasResponse = useCallback(async (text, agentRole = '', messageType = 'general', urgency = 'normal') => {
+    // Cancel any currently playing audio before starting new one
+    stopCurrentSpeech();
+
+    // Clean text: remove markdown, [DOC:...] prefixes, code blocks, etc.
+    const cleanText = cleanTextForSpeech(text);
+    if (!cleanText || cleanText.length < 3) return;
+
     try {
+      setIsSpeaking(true);
       const response = await fetch(`${API_BASE_URL}/api/tts/speak`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text, agent_role: agentRole, message_type: messageType, urgency })
+        body: JSON.stringify({ text: cleanText, agent_role: agentRole, message_type: messageType, urgency })
       });
 
       if (!response.ok) throw new Error('TTS Failed');
@@ -103,21 +160,34 @@ export function useVoiceHandoff(onSpeechDetected) {
       const audioBlob = await response.blob();
       const audioUrl = URL.createObjectURL(audioBlob);
       const audio = new Audio(audioUrl);
+      currentAudioRef.current = audio; // Track this audio for future interruption
 
       audio.onended = () => {
         console.log('[ATLAS TTS] Playback finished.');
+        currentAudioRef.current = null;
+        setIsSpeaking(false);
+        URL.revokeObjectURL(audioUrl); // Clean up memory
+      };
+
+      audio.onerror = () => {
+        currentAudioRef.current = null;
+        setIsSpeaking(false);
       };
 
       await audio.play();
     } catch (error) {
       console.error('[ATLAS TTS] Error playing audio:', error);
+      currentAudioRef.current = null;
+      setIsSpeaking(false);
     }
-  }, [startEightSecondListeningLoop]);
+  }, [stopCurrentSpeech]);
 
   return {
     isListening,
+    isSpeaking,
     startEightSecondListeningLoop,
     stopListening,
+    stopCurrentSpeech,
     speakAtlasResponse
   };
 }

@@ -94,15 +94,18 @@ async def route_query(request: Any, target_model: str = None, target_provider: s
     
     if not model_id or not provider:
         if getattr(request, 'has_image', False):
-            model_id = "llama-3.2-90b-vision-preview"
-            provider = "Groq"
+            # Blueprint: Vision → NVIDIA NIM (not Groq)
+            model_id = "meta/llama-3.2-11b-vision-instruct"
+            provider = "NVIDIA NIM"
             
         elif prompt_length > LONG_CONTEXT_THRESHOLD:
-            model_id = "Meta-Llama-3.1-70B-Instruct"
+            # Blueprint: Long Context → Llama-4-Maverick on SambaNova (128K ctx)
+            model_id = "Llama-4-Maverick-17B-128E-Instruct"
             provider = "SambaNova"
             
         elif is_code_request:
-            model_id = "Meta-Llama-3.1-405B-Instruct"
+            # Blueprint: Code/Reasoning → DeepSeek-R1 on SambaNova
+            model_id = "DeepSeek-R1"
             provider = "SambaNova"
             
         elif getattr(request, 'is_complex_artifact', False):
@@ -110,7 +113,7 @@ async def route_query(request: Any, target_model: str = None, target_provider: s
             provider = "Google AI Studio"
             
         else:
-            # Default Chat
+            # Default Chat → Groq Llama 3.3 70B
             model_id = "llama-3.3-70b-versatile"
             provider = "Groq"
         
