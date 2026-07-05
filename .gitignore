@@ -261,3 +261,4 @@ test_audio_output/
 turn1_reply.wav
 turn2_reply.wav
 live_reply.wav
+!frontend/src/lib/
