@@ -16,3 +16,4 @@ langchain-core
 email-validator
 e2b-code-interpreter
 pypdf
+gtts

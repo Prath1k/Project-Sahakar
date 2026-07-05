@@ -49,6 +49,21 @@ async def generate_response(prompt: str, model_id: str, provider: str, api_key: 
             response = await client.post(url, headers=headers, json=payload)
             if response.status_code != 200:
                 logger.error(f"LLM API Error: {response.text}")
+                # Automatic Failover: If primary provider fails (e.g. 402 out of credits, 404, 429), fallback to Groq Llama 3.3 70B
+                import os
+                if provider != "Groq" and (os.environ.get("GROQ_API_KEY") or os.environ.get("GROQ_API_KEY_1")):
+                    fb_key = os.environ.get("GROQ_API_KEY") or os.environ.get("GROQ_API_KEY_1")
+                    logger.info(f"Auto-Failover triggered: Switching from {provider} to Groq Llama 3.3 70B due to Status {response.status_code}...")
+                    fb_url = PROVIDER_URLS["Groq"]
+                    fb_headers = {"Authorization": f"Bearer {fb_key}", "Content-Type": "application/json"}
+                    fb_payload = {"model": "llama-3.3-70b-versatile", "messages": [{"role": "user", "content": content_payload}], "temperature": 0.7, "max_tokens": 1024}
+                    try:
+                        fb_res = await client.post(fb_url, headers=fb_headers, json=fb_payload)
+                        if fb_res.status_code == 200:
+                            fb_data = fb_res.json()
+                            return f"⚠️ [Auto-Failover from {provider}: Status {response.status_code}]\n\n" + fb_data["choices"][0]["message"]["content"]
+                    except Exception as fb_err:
+                        logger.error(f"Failover also failed: {fb_err}")
                 return f"Error from {provider} API (Status {response.status_code}): {response.text}"
                 
             data = response.json()

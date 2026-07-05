@@ -279,6 +279,8 @@ const ChatInterface = ({ onOpenArtifact, activeAgent, loadedMessages, selectedMo
           disabled={isGenerating} 
           isListening={isListening}
           onMicClick={handleToggleVoiceMode}
+          isAutoSpeak={isAutoSpeak}
+          onToggleAutoSpeak={() => setIsAutoSpeak(prev => !prev)}
         />
       </div>
     </div>

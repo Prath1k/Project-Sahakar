@@ -99,13 +99,13 @@ async def route_query(request: Any, target_model: str = None, target_provider: s
             provider = "NVIDIA NIM"
             
         elif prompt_length > LONG_CONTEXT_THRESHOLD:
-            # Blueprint: Long Context → Llama-4-Maverick on SambaNova (128K ctx)
-            model_id = "Llama-4-Maverick-17B-128E-Instruct"
+            # Blueprint: Long Context → Meta-Llama-3.3-70B-Instruct on SambaNova (128K ctx)
+            model_id = "Meta-Llama-3.3-70B-Instruct"
             provider = "SambaNova"
             
         elif is_code_request:
-            # Blueprint: Code/Reasoning → DeepSeek-R1 on SambaNova
-            model_id = "DeepSeek-R1"
+            # Blueprint: Code/Reasoning → DeepSeek-V3.2 on SambaNova
+            model_id = "DeepSeek-V3.2"
             provider = "SambaNova"
             
         elif getattr(request, 'is_complex_artifact', False):

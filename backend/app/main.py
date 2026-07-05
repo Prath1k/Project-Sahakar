@@ -82,8 +82,8 @@ def get_models():
         "models": [
             {"id": "auto", "name": "🌟 Auto Router", "provider": "ATLAS", "purpose": "Intelligent routing to best model", "is_default": True},
             {"id": "groq-llama-3-3", "name": "⚡ Groq Llama 3.3 70B", "provider": "Groq", "purpose": "Default chat, fast responses"},
-            {"id": "sambanova-deepseek-r1", "name": "🧠 DeepSeek R1", "provider": "SambaNova", "purpose": "Complex reasoning & code"},
-            {"id": "sambanova-maverick", "name": "📚 Llama-4-Maverick", "provider": "SambaNova", "purpose": "Long context, multi-document analysis (128K tokens)"},
+            {"id": "sambanova-deepseek-r1", "name": "🧠 DeepSeek V3.2", "provider": "SambaNova", "purpose": "Complex reasoning & code"},
+            {"id": "sambanova-maverick", "name": "📚 Llama-3.3-70B (SambaNova)", "provider": "SambaNova", "purpose": "Long context, multi-document analysis (128K tokens)"},
             {"id": "cerebras-llama", "name": "🚀 Cerebras Llama 3.3 70B", "provider": "Cerebras", "purpose": "High-speed batch processing"},
             {"id": "gemini-1-5-pro", "name": "✨ Gemini 1.5 Pro", "provider": "Google AI Studio", "purpose": "Complex artifacts, large documents"},
             {"id": "nvidia-nim-vision", "name": "👁️ NVIDIA NIM Vision", "provider": "NVIDIA NIM", "purpose": "Vision tasks, image understanding"},
@@ -169,10 +169,10 @@ You are ATLAS, a helpful and dynamic AI assistant. Respond naturally and helpful
             target_model = "llama-3.3-70b-versatile"
             target_provider = "Groq"
         elif mo == "SambaNova" or mo == "DeepSeek":
-            target_model = "DeepSeek-R1"  # Blueprint: reasoning/code → DeepSeek-R1
+            target_model = "DeepSeek-V3.2"  # Blueprint: reasoning/code → DeepSeek-V3.2
             target_provider = "SambaNova"
         elif mo == "Maverick" or mo == "LongContext":
-            target_model = "Llama-4-Maverick-17B-128E-Instruct"  # Blueprint: long context
+            target_model = "Meta-Llama-3.3-70B-Instruct"  # Blueprint: long context
             target_provider = "SambaNova"
         elif mo == "Nvidia":
             target_model = "meta/llama-3.2-11b-vision-instruct"  # Blueprint: NVIDIA NIM vision

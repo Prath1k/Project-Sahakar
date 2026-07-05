@@ -277,15 +277,38 @@ class KokoroTTSService:
                 if len(audio_bytes) > 1000:
                     latency = (time.perf_counter() - start_time) * 1000
                     logger.info(f"Edge Neural TTS Success ({edge_voice}) | Size: {len(audio_bytes)} bytes | Latency: {latency:.1f}ms")
-                    return audio_bytes, False, latency
+                    return audio_bytes, "Edge-Neural-TTS", latency
         except Exception as edge_err:
-            logger.warning(f"Edge TTS fallback failed ({edge_err}), using Windows native speech.")
+            logger.warning(f"Edge TTS fallback failed ({edge_err}), trying Google TTS (gTTS).")
+
+        # Try Google TTS (gTTS) - 100% reliable free cloud TTS
+        try:
+            from gtts import gTTS
+            import tempfile
+            import os
+            
+            temp_mp3 = os.path.join(tempfile.gettempdir(), f"atlas_gtts_{os.getpid()}_{int(time.time()*1000)}.mp3")
+            tts = gTTS(text=text[:500], lang='en', slow=False)
+            tts.save(temp_mp3)
+            if os.path.exists(temp_mp3):
+                with open(temp_mp3, "rb") as f:
+                    audio_bytes = f.read()
+                try:
+                    os.remove(temp_mp3)
+                except Exception:
+                    pass
+                if len(audio_bytes) > 500:
+                    latency = (time.perf_counter() - start_time) * 1000
+                    logger.info(f"gTTS Success | Size: {len(audio_bytes)} bytes | Latency: {latency:.1f}ms")
+                    return audio_bytes, "Google-TTS", latency
+        except Exception as gtts_err:
+            logger.warning(f"gTTS fallback failed ({gtts_err}), using Windows/Local WAV.")
 
         # Local Fallback Synthesizer (Windows Native Speech / Acoustic)
         audio_bytes = cls.generate_fallback_wav(text)
         latency = (time.perf_counter() - start_time) * 1000
         logger.info(f"Local Fallback Synthesis Complete | Size: {len(audio_bytes)} bytes | Latency: {latency:.1f}ms")
-        return audio_bytes, False, latency
+        return audio_bytes, "Local-WAV", latency
 
 
 # ---------------------------------------------------------------------------
@@ -313,7 +336,7 @@ async def speak_endpoint(request: TTSRequest):
     )
     
     # 2. Synthesize Audio
-    audio_bytes, is_gpu, synth_latency = await KokoroTTSService.synthesize_audio(
+    audio_bytes, source_name, synth_latency = await KokoroTTSService.synthesize_audio(
         text=request.text,
         voice=route.assigned_voice,
         speed=request.speed or 1.0,
@@ -321,7 +344,7 @@ async def speak_endpoint(request: TTSRequest):
     )
     
     total_latency = route.latency_ms + synth_latency
-    media_type = "audio/wav" if (request.response_format == "wav" or not is_gpu) else "audio/mpeg"
+    media_type = "audio/mpeg" if source_name in ["Edge-Neural-TTS", "Google-TTS"] else "audio/wav"
     
     # 3. Return streaming audio response with diagnostic headers
     headers = {
@@ -329,7 +352,7 @@ async def speak_endpoint(request: TTSRequest):
         "X-Voice-Profile-Name": route.profile_name,
         "X-Voice-Reason": route.reason,
         "X-Voice-Category": route.category,
-        "X-Synthesis-Source": "Kokoro-GPU-FastAPI" if is_gpu else "Local-Acoustic-Fallback",
+        "X-Synthesis-Source": source_name,
         "X-Total-Latency-Ms": str(round(total_latency, 2)),
         "Access-Control-Expose-Headers": "X-Assigned-Voice, X-Voice-Profile-Name, X-Voice-Reason, X-Synthesis-Source, X-Total-Latency-Ms"
     }

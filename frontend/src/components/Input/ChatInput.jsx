@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react';
 import { Send, Mic, Paperclip, X, FileText } from 'lucide-react';
 import './ChatInput.css';
 
-const ChatInput = ({ onSendMessage, disabled, isListening, onMicClick }) => {
+const ChatInput = ({ onSendMessage, disabled, isListening, onMicClick, isAutoSpeak, onToggleAutoSpeak }) => {
   const [text, setText] = useState('');
   const [attachedImage, setAttachedImage] = useState(null);
   const [attachedFile, setAttachedFile] = useState(null);
@@ -136,6 +136,16 @@ const ChatInput = ({ onSendMessage, disabled, isListening, onMicClick }) => {
               disabled={disabled}
             >
               <Mic size={16} />
+            </button>
+
+            <button 
+              type="button" 
+              className={`btn-silver action-btn ${isAutoSpeak ? 'listening-active' : ''}`}
+              onClick={onToggleAutoSpeak}
+              title={isAutoSpeak ? "Auto-Speak: ON (Click to turn off)" : "Auto-Speak: OFF (Click to turn on)"}
+              style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '0 8px', borderRadius: '6px', fontSize: '12px', fontWeight: 'bold' }}
+            >
+              🔊 {isAutoSpeak ? 'ON' : 'OFF'}
             </button>
           </div>
 
