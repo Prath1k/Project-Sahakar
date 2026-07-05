@@ -3,7 +3,7 @@ import MessageBubble from './MessageBubble';
 import ChatInput from '../Input/ChatInput';
 import AgentBanner from './AgentBanner';
 import { useVoiceHandoff } from '../../hooks/useVoiceHandoff';
-const API_BASE_URL = 'http://localhost:5001';
+import { API_BASE_URL } from '../../lib/config';
 import { Volume2, VolumeX, RotateCcw } from 'lucide-react';
 import './ChatInterface.css';
 
@@ -173,7 +173,7 @@ const ChatInterface = ({ onOpenArtifact, activeAgent, loadedMessages, selectedMo
         }
       }
 
-      const endpoint = activeAgent && activeAgent.id ? '/api/agent/chat' : '/api/chat';
+      const endpoint = activeAgent && activeAgent.id ? '/agent/chat' : '/chat';
       const bodyPayload = activeAgent && activeAgent.id ? {
         agent_id: activeAgent.id,
         prompt: text || "Please analyze this image.",
