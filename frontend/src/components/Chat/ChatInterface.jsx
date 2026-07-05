@@ -281,6 +281,7 @@ const ChatInterface = ({ onOpenArtifact, activeAgent, loadedMessages }) => {
           </button>
         </div>
       </div>
+      </div>
 
       {/* Messages Area */}
       <div className="chat-messages">

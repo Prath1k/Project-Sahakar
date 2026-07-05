@@ -43,7 +43,7 @@ const AuthPage = ({ onGuestLogin }) => {
     <div className="auth-container">
       <div className="auth-box input-box">
         <div className="auth-header">
-          <img src="/logo.png" alt="Logo" className="auth-logo" />
+          <img src="/logo.jpeg" alt="Logo" className="auth-logo" />
           <h2>{isLogin ? 'Welcome Back' : 'Create an Account'}</h2>
           <p>Project Sahakar - Intelligent Assistant</p>
         </div>
