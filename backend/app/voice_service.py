@@ -43,9 +43,9 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] [Voi
 
 # Configuration
 KOKORO_API_URL = os.getenv("KOKORO_API_URL", "http://localhost:8880/v1/audio/speech")
-DEFAULT_VOICE_BLEND = "af_jessica" # Universal Warm Baseline Voice (Jessica)
-ANALYTICAL_VOICE = "af_jessica"
-COACHING_VOICE = "af_jessica"
+DEFAULT_VOICE_BLEND = "custom_blend.pt" # 80/20 PyTorch Blend (80% Jessica + 20% Sarah)
+ANALYTICAL_VOICE = "custom_blend.pt"
+COACHING_VOICE = "custom_blend.pt"
 
 
 class VoiceProfileInfo(BaseModel):
@@ -97,7 +97,7 @@ class VoiceRouter:
         persona_lower = (persona_mode or "").lower()
         text_lower = (text or "").lower()
         
-        # 1. System Alerts / Security Warnings / Errors -> Warm Baseline Voice (jessica)
+        # 1. System Alerts / Security Warnings / Errors -> ATLAS 80/20 Blend
         if (
             urgency_lower in ["high", "critical", "emergency"]
             or msg_type_lower in ["alert", "error", "security", "warning", "system_alert", "violation"]
@@ -106,13 +106,13 @@ class VoiceRouter:
             elapsed = (time.perf_counter() - start_time) * 1000
             return VoiceRouteDecision(
                 assigned_voice=ANALYTICAL_VOICE,
-                profile_name="Warm Baseline Voice (Jessica)",
-                reason=f"High urgency ({urgency}) or system alert/error detected (using unified Jessica voice).",
+                profile_name="ATLAS 80/20 Voice Blend (Jessica + Sarah)",
+                reason=f"High urgency ({urgency}) or system alert/error detected (using 80/20 acoustic blend).",
                 category="System Alerts / Security Warnings",
                 latency_ms=round(elapsed, 2)
             )
             
-        # 2. Analytical / Code Review / Devil's Advocate -> Warm Baseline Voice (jessica)
+        # 2. Analytical / Code Review / Devil's Advocate -> ATLAS 80/20 Blend
         if (
             persona_lower in ["analytical", "code_review", "devils_advocate", "adversarial", "audit"]
             or role_lower in ["careerarchitect", "fiscalsentinel", "zenithcounsel", "nexusstrategist", "code_reviewer", "auditor"]
@@ -121,13 +121,13 @@ class VoiceRouter:
             elapsed = (time.perf_counter() - start_time) * 1000
             return VoiceRouteDecision(
                 assigned_voice=ANALYTICAL_VOICE,
-                profile_name="Warm Baseline Voice (Jessica)",
-                reason=f"Analytical/Code Review/Devil's Advocate persona active ({agent_role or persona_mode}) (using unified Jessica voice).",
+                profile_name="ATLAS 80/20 Voice Blend (Jessica + Sarah)",
+                reason=f"Analytical/Code Review/Devil's Advocate persona active ({agent_role or persona_mode}) (using 80/20 acoustic blend).",
                 category="Analytical / Code Review / Devil's Advocate",
                 latency_ms=round(elapsed, 2)
             )
             
-        # 3. Coaching / Encouragement / Onboarding -> Warm Baseline Voice (jessica)
+        # 3. Coaching / Encouragement / Onboarding -> ATLAS 80/20 Blend
         if (
             persona_lower in ["coaching", "encouragement", "onboarding", "mentor", "tutor", "support"]
             or role_lower in ["scholarcore", "biometricspilot", "velocityform", "mentor", "tutor", "coach"]
@@ -137,18 +137,18 @@ class VoiceRouter:
             elapsed = (time.perf_counter() - start_time) * 1000
             return VoiceRouteDecision(
                 assigned_voice=COACHING_VOICE,
-                profile_name="Warm Baseline Voice (Jessica)",
-                reason=f"Coaching/Encouragement/Onboarding context detected ({agent_role or msg_type_lower}) (using unified Jessica voice).",
+                profile_name="ATLAS 80/20 Voice Blend (Jessica + Sarah)",
+                reason=f"Coaching/Encouragement/Onboarding context detected ({agent_role or msg_type_lower}) (using 80/20 acoustic blend).",
                 category="Coaching / Encouragement / Onboarding",
                 latency_ms=round(elapsed, 2)
             )
             
-        # 4. Default / Conversational / General Assistance -> Warm Baseline Voice (jessica)
+        # 4. Default / Conversational / General Assistance -> ATLAS 80/20 Blend
         elapsed = (time.perf_counter() - start_time) * 1000
         return VoiceRouteDecision(
             assigned_voice=DEFAULT_VOICE_BLEND,
-            profile_name="Warm Baseline Voice (Jessica)",
-            reason="Default conversational & general assistance mode (using unified Jessica voice).",
+            profile_name="ATLAS 80/20 Voice Blend (Jessica + Sarah)",
+            reason="Default conversational & general assistance mode (using proprietary 80/20 acoustic blend).",
             category="Default / Conversational / General Assistance",
             latency_ms=round(elapsed, 2)
         )
@@ -258,6 +258,9 @@ class KokoroTTSService:
             temp_wav = os.path.join(tempfile.gettempdir(), f"atlas_edge_{os.getpid()}_{int(time.time()*1000)}.mp3")
             # Choose appropriate Edge neural voice based on requested Kokoro profile
             edge_voice_map = {
+                "custom_blend.pt": "en-US-AriaNeural",
+                "atlas_blend.pt": "en-US-AriaNeural",
+                "af_jessica": "en-US-AriaNeural",
                 "af_sarah": "en-US-AriaNeural",
                 "am_michael": "en-US-GuyNeural",
                 "bf_emma": "en-GB-SoniaNeural",
@@ -384,10 +387,10 @@ async def list_profiles_endpoint():
         "profiles": [
             {
                 "id": DEFAULT_VOICE_BLEND,
-                "name": "Warm Baseline Voice (Jessica)",
-                "description": "Warm conversational baseline voice used universally across all ATLAS agents and aspects.",
+                "name": "ATLAS 80/20 Voice Blend (Jessica + Sarah)",
+                "description": "Proprietary acoustic blend (80% Jessica + 20% Sarah) used universally across all ATLAS agents and aspects.",
                 "category": "Universal / All Aspects",
-                "weight_blend": "100% af_jessica"
+                "weight_blend": "80% jessica.pt + 20% sarah.pt (custom_blend.pt)"
             }
         ],
         "routing_schema": {
