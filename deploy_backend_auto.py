@@ -20,7 +20,9 @@ def main():
     print("🚀 Project Sahakar — 100% Automated Cloud Deployer")
     print("------------------------------------------------------------------")
     
-    repo_id = "sricharansairi/ProjectSahakar"
+    repo_id_input = input("Enter your Hugging Face Space Repo ID (e.g., username/project-sahakar-backend) [Press Enter for 'sricharansairi/ProjectSahakar']: ").strip()
+    repo_id = repo_id_input if repo_id_input else "sricharansairi/ProjectSahakar"
+    
     token = input("🔑 Paste your Hugging Face Access Token (from https://huggingface.co/settings/tokens): ").strip()
     
     if not token:

@@ -32,9 +32,9 @@ ATLAS is a **Self-Correcting Adaptive Agentic RAG (SCAAR)** system that:
 ├─────────────────────────────────────────────────────────────────────────────┤  
 │                                                                             │  
 │  ┌──────────────────┐     ┌──────────────────┐     ┌──────────────────┐    │  
-│  │   React/Next.js  │     │   FastAPI/Rust   │     │   Oracle Cloud   │    │  
-│  │   Frontend       │◄───►│   Backend API    │◄───►│   VPS (24GB RAM) │    │  
-│  │   (Vercel)       │     │   (Oracle VPS)   │     │   (Always Free)  │    │  
+│  │   React/Next.js  │     │   FastAPI/Rust   │     │   Render.com     │    │  
+│  │   Frontend       │◄───►│   Backend API    │◄───►│   (Docker Web)   │    │  
+│  │   (Vercel)       │     │   (Render Web)   │     │   (Always Free)  │    │  
 │  └──────────────────┘     └──────────────────┘     └──────────────────┘    │  
 │          │                        │                        │                │  
 │          ▼                        ▼                        ▼                │  
@@ -507,19 +507,19 @@ Artifacts are structured outputs that appear in a split-screen Artifact View:
 | Component | Platform | Justification |  
 |-----------|----------|---------------|  
 | **Frontend** | Vercel | Edge rendering, zero-latency UI |  
-| **Backend** | Oracle Cloud (Always Free) | 24GB RAM / 4 ARM vCPUs - NEVER sleeps |  
+| **Backend** | Render.com (Always Free) | Kept awake 24/7 via UptimeRobot |  
 | **Relational Memory** | Supabase (pgvector) | PostgreSQL with vector support |  
 | **Document Vectors** | Pinecone/Qdrant Cloud | Serverless, massive free tier |  
 | **Code Sandbox** | E2B Cloud | Ephemeral microVMs |  
 | **Version Control** | GitHub | Private repo, feature branches |  
   
-### Why Oracle Cloud?  
+### Why Render.com?  
   
-| Feature | Oracle Cloud (Always Free) | Typical Free Tier |  
+| Feature | Render.com (w/ Pinger) | Typical Free Tier |  
 |---------|---------------------------|-------------------|  
-| **RAM** | 24GB | 1GB (AWS) |  
-| **CPU** | 4 ARM vCPUs | 1 vCPU |  
-| **Sleep** | NEVER sleeps | Sleeps after 15-60 minutes |  
+| **RAM** | 512MB (Sufficient) | 512MB |  
+| **CPU** | 0.1 vCPU | 0.1 vCPU |  
+| **Sleep** | NEVER sleeps (via cron) | Sleeps after 15 minutes |  
 | **Cost** | $0 forever | $0 (limited) |  
   
 ### Team Collaboration Workflow (Git)  
@@ -569,7 +569,7 @@ OPENROUTER_API_KEY=
   
 ### The "Never Sleep" Hack  
   
-Oracle Cloud VPS runs 24/7/365. No cold starts. No latency for judges.  
+Render backend combined with UptimeRobot runs 24/7/365. No cold starts. No latency for judges.  
   
 ---  
   
@@ -604,9 +604,9 @@ Oracle Cloud VPS runs 24/7/365. No cold starts. No latency for judges.
 | 1 | Collaborative Work | ✅ | Git feature branches + Merge Master |  
 | 2 | Models | ✅ | 9 models across 5 providers |  
 | 3 | Intelligent Agents | ✅ | 7 specialized agent containers |  
-| 4 | Hosting | ✅ | Oracle Cloud 24GB VPS |  
+| 4 | Hosting | ✅ | Render.com (Docker) |  
 | 5 | Ears (STT) | ✅ | Groq Whisper API |  
-| 6 | Deploy to Cloud | ✅ | Vercel + Oracle Cloud |  
+| 6 | Deploy to Cloud | ✅ | Vercel + Render.com |  
 | 7 | Rust/Python | ✅ | Python backend + Rust components |  
 | 8 | Kokoro FastAPI TTS | ✅ | 80/20 voice blend |  
 | 9 | Export Modules | ✅ | JSON, CSV, PDF, DOCX, XLSX, PNG, API |  
@@ -638,7 +638,7 @@ Oracle Cloud VPS runs 24/7/365. No cold starts. No latency for judges.
 |--------|--------|---------------------|  
 | **Technical Complexity** | Highest in room | 7 agents, 9 models, 5 databases, voice blend, vision, sandboxing |  
 | **Innovation** | Category-defining | SCAAR memory, Deterministic Gateway, 80/20 voice blend |  
-| **Presentation** | Flawless | 13-hour build + Oracle Cloud no-sleep + polished UI |  
+| **Presentation** | Flawless | 13-hour build + Render.com no-sleep + polished UI |  
 | **Judge Engagement** | Interactive | Voice demo, artifact demo, security demo |  
 | **Code Quality** | Professional | Git workflow, comprehensive README, modular architecture |  
   
@@ -650,7 +650,7 @@ Oracle Cloud VPS runs 24/7/365. No cold starts. No latency for judges.
 - [ ] Create fresh GitHub repo  
 - [ ] Set up `.env.example` with all required variables  
 - [ ] Share keys securely with team  
-- [ ] Set up Oracle Cloud VPS (4 vCPU, 24GB RAM)  
+- [ ] Set up Render.com Web Service  
 - [ ] Install Docker + Python on VPS  
 - [ ] Set up Supabase project with pgvector  
 - [ ] Set up Pinecone/Qdrant vector database  
@@ -665,7 +665,7 @@ Oracle Cloud VPS runs 24/7/365. No cold starts. No latency for judges.
 - [ ] Set up 7 agent containers (system prompts + tools)  
 - [ ] Implement Supabase + Pinecone integration  
 - [ ] Deploy frontend to Vercel  
-- [ ] Deploy backend to Oracle Cloud  
+- [ ] Deploy backend to Render.com  
   
 ### Day 2 (Final Polish)  
 - [ ] Add Artifact generation and rendering  
@@ -689,7 +689,7 @@ Oracle Cloud VPS runs 24/7/365. No cold starts. No latency for judges.
 3. **True autonomy** - Code execution, vision, voice, all integrated  
 4. **Enterprise-grade security** - Sandboxing, firewalls, rate limiting  
 5. **Beautiful UX** - Artifacts, animations, custom voice  
-6. **Real infrastructure** - Oracle Cloud 24GB VPS (never sleeps)  
+6. **Real infrastructure** - Render.com Backend + UptimeRobot (never sleeps)  
 7. **Team-ready** - Git workflow, modular architecture  
 8. **Category-defining** - "Agentic OS" not just "chatbot"  
   

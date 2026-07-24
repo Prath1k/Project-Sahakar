@@ -7,7 +7,7 @@ This guide provides step-by-step instructions for deploying Project Sahakar (SCA
 ## ⭐ Strategy 1: Zero-Cost Cloud Stack (Recommended)
 *Total Monthly Cost: **$0.00** | Deployment Time: **~15 minutes***
 
-This strategy uses **Hugging Face Spaces** for the backend (free 16GB RAM Docker container), **Supabase** for the relational Fact Brain, and **Vercel** for the global CDN frontend.
+This strategy uses **Render.com** for the backend (Free Web Service), **Supabase** for the relational Fact Brain, and **Vercel** for the global CDN frontend. With a free **Cron-Job** keep-awake ping, it achieves 24/7 uptime for $0.00.
 
 ### Step 1: Prepare Database (Supabase Free Tier)
 1. Go to [supabase.com](https://supabase.com) and create a new project.
@@ -28,15 +28,16 @@ This strategy uses **Hugging Face Spaces** for the backend (free 16GB RAM Docker
    );
    ```
 
-### Step 2: Deploy Backend & RAG (Hugging Face Spaces)
-1. Go to [huggingface.co/spaces](https://huggingface.co/spaces) and click **Create new Space**.
-2. **Space Name**: `project-sahakar-backend` (or any name you prefer).
-3. **Select the Space SDK**: Choose **Docker** -> **Blank**.
-4. **Space Hardware**: Free (2 vCPU, 16GB RAM) — perfect for our ChromaDB vector engine and Edge-TTS!
-5. Connect your GitHub repository:
-   - If using the CLI / Git: Push the contents of the `/backend` folder directly to your Space repository.
-   - Note: The Space root should contain `Dockerfile`, `requirements.txt`, and the `app/` directory.
-6. Go to **Space Settings -> Variables and secrets** and add your secrets:
+### Step 2: Deploy Backend & RAG (Render.com)
+1. Go to [Render.com](https://render.com) and log in with GitHub.
+2. Click **New +** and select **Web Service**.
+3. Choose **Build and deploy from a Git repository** and connect your `Project-Sahakar` repository.
+4. Fill in the deployment details:
+   - **Name**: `sahakar-backend`
+   - **Root Directory**: `backend` *(Crucial!)*
+   - **Environment**: `Docker`
+   - **Instance Type**: `Free`
+5. Go to **Environment Variables** and add all your secrets from your `.env` file:
    ```env
    GROQ_API_KEY=your_groq_api_key
    GEMINI_API_KEY=your_gemini_api_key
@@ -44,15 +45,21 @@ This strategy uses **Hugging Face Spaces** for the backend (free 16GB RAM Docker
    SUPABASE_URL=your_supabase_url
    SUPABASE_ANON_KEY=your_supabase_anon_key
    ```
-7. Click **Restart Space**. Within 2 minutes, your FastAPI backend will be live!
-   - Copy your live backend URL: `https://yourusername-project-sahakar-backend.hf.space`
+6. Click **Create Web Service**. Wait 3-5 minutes for it to build and deploy.
+   - Copy your live backend URL (e.g., `https://sahakar-backend-xxxx.onrender.com`)
+
+### Step 2.5: Set up 24/7 Keep-Awake Pinger
+Render's free tier sleeps after 15 minutes of inactivity. To prevent this:
+1. Go to [cron-job.org](https://cron-job.org) and create a free account.
+2. Create a new cronjob pointing to your live Render URL (e.g., `https://sahakar-backend-xxxx.onrender.com/`).
+3. Set it to execute every **10 minutes**. This keeps your backend awake 24/7 and consumes ~730 of your 750 free monthly Render hours, keeping it permanently free!
 
 ### Step 3: Deploy Frontend (Vercel)
 1. Go to [vercel.com](https://vercel.com) and click **Add New -> Project**.
 2. Import your GitHub repository (`Project-Sahakar`) and select the `frontend` root directory.
-3. In **Environment Variables**, add the live Hugging Face backend URL you copied in Step 2:
+3. In **Environment Variables**, add the live Render backend URL you copied in Step 2:
    ```env
-   VITE_API_BASE_URL=https://yourusername-project-sahakar-backend.hf.space
+   VITE_API_BASE_URL=https://sahakar-backend-xxxx.onrender.com
    ```
 4. Click **Deploy**!
 5. Once built, open your live Vercel URL. Click **"Continue as Guest"** to test your live RAG + Voice + AI Agents!
